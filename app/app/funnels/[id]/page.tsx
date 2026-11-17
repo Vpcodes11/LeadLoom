@@ -31,8 +31,8 @@ export default async function FunnelPage({ params }: { params: Promise<{ id: str
         title={funnel.name}
         sub={<>Goal: {funnel.goal} · {done}/{funnel.items.length} approved</>}
         actions={
-          <ActionButton action={generateFunnelDrafts.bind(null, funnel.id)} variant={undrafted ? "primary" : "secondary"} pending={`Writing ${undrafted} pieces... (this can take a few minutes)`}>
-            {undrafted ? `Draft all ${undrafted} remaining pieces` : writing ? "Drafting..." : "All pieces drafted"}
+          <ActionButton action={generateFunnelDrafts.bind(null, funnel.id)} variant={undrafted ? "primary" : "secondary"} pending="Queuing drafts...">
+            {undrafted ? (undrafted === 1 ? "Draft the remaining piece" : `Draft all ${undrafted} remaining pieces`) : writing ? "Drafting..." : "All pieces drafted"}
           </ActionButton>
         }
       />

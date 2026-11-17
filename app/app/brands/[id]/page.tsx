@@ -44,7 +44,7 @@ export default async function BrandPage({ params }: { params: Promise<{ id: stri
                   <Link key={f.id} href={`/app/funnels/${f.id}`}>
                     <Card className="h-full hover:border-brand-500 transition">
                       <div className="font-medium">{f.name}</div>
-                      <div className="mt-1 text-xs text-slate-500">{f._count.items} pieces · goal: {f.goal}</div>
+                      <div className="mt-1 text-xs text-slate-500">{f._count.items} piece{f._count.items === 1 ? "" : "s"} · goal: {f.goal}</div>
                     </Card>
                   </Link>
                 ))}

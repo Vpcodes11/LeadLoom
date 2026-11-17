@@ -72,7 +72,7 @@ export default async function Dashboard() {
                     <span className="font-medium">{b.name}</span>
                     {!b.voiceProfile && <Badge tone="changes_requested">No voice profile</Badge>}
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">{b._count.funnels} funnels · {b._count.items} pieces</div>
+                  <div className="mt-1 text-xs text-slate-500">{b._count.funnels} funnel{b._count.funnels === 1 ? "" : "s"} · {b._count.items} piece{b._count.items === 1 ? "" : "s"}</div>
                 </Card>
               </Link>
             ))}
