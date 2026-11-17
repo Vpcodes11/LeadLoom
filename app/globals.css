@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #eef6ff;
+  --color-brand-100: #d9eaff;
+  --color-brand-500: #2f6bff;
+  --color-brand-600: #1f55e6;
+  --color-brand-700: #1a45b8;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body { @apply bg-slate-50 text-slate-900 antialiased; }
+
+.prose-ll { @apply text-[15px] leading-7 text-slate-800; }
+.prose-ll h1 { @apply text-2xl font-bold mt-2 mb-4 text-slate-900; }
+.prose-ll h2 { @apply text-xl font-semibold mt-8 mb-3 text-slate-900; }
+.prose-ll h3 { @apply text-lg font-semibold mt-6 mb-2; }
+.prose-ll p { @apply my-3; }
+.prose-ll ul { @apply list-disc pl-6 my-3; }
+.prose-ll ol { @apply list-decimal pl-6 my-3; }
+.prose-ll blockquote { @apply border-l-4 border-brand-100 pl-4 italic text-slate-600 my-4; }
+.prose-ll a { @apply text-brand-600 underline; }
+.prose-ll strong { @apply font-semibold text-slate-900; }
+.prose-ll code { @apply bg-slate-100 rounded px-1 text-sm; }
+.prose-ll table { @apply w-full text-sm my-4; }
+.prose-ll th, .prose-ll td { @apply border border-slate-200 px-2 py-1 text-left; }

@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Workspace {
+  id                 String    @id @default(cuid())
+  name               String
+  plan               String    @default("trial") // trial | starter | growth | agency
+  subscriptionStatus String    @default("trialing")
+  stripeCustomerId   String?   @unique
+  stripeSubscriptionId String?
+  agencyName         String?   // white-label name shown on client review portal
+  createdAt          DateTime  @default(now())
+  members            Membership[]
+  brands             Brand[]
+  usage              UsageEvent[]
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  memberships  Membership[]
+}
+
+model Membership {
+  id          String    @id @default(cuid())
+  role        String    @default("owner") // owner | editor
+  userId      String
+  workspaceId String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+}
+
+model Brand {
+  id            String        @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name          String
+  website       String?
+  industry      String?
+  audience      String        // ideal customer profile
+  offer         String        // what they sell, price point
+  differentiators String?
+  proofPoints   String?       // results, testimonials, numbers the AI may cite
+  competitors   String?
+  voiceSamples  String?       // pasted existing writing
+  voiceProfile  String?       // JSON VoiceProfile
+  reviewToken   String        @unique @default(cuid()) // client review portal link
+  createdAt     DateTime      @default(now())
+  funnels       Funnel[]
+  items         ContentItem[]
+}
+
+model Funnel {
+  id        String        @id @default(cuid())
+  brandId   String
+  brand     Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  name      String
+  goal      String        // e.g. "book demo calls"
+  strategy  String        // summary from planner
+  createdAt DateTime      @default(now())
+  items     ContentItem[]
+}
+
+model ContentItem {
+  id         String     @id @default(cuid())
+  brandId    String
+  brand      Brand      @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  funnelId   String?
+  funnel     Funnel?    @relation(fields: [funnelId], references: [id], onDelete: SetNull)
+  position   Int        @default(0)
+  title      String
+  format     String     // blog | landing_page | email_sequence | case_study | linkedin_post | newsletter
+  stage      String     // awareness | consideration | decision
+  keyword    String?
+  angle      String?    // brief: what this piece argues
+  cta        String?    // where it sends the reader next
+  notes      String?    // extra brief from the client request
+  status     String     @default("planned") // requested | planned | draft | in_review | changes_requested | approved | delivered
+  body       String?
+  qaReport   String?    // JSON QaReport
+  version    Int        @default(0)
+  dueDate    DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  comments   Comment[]
+  revisions  Revision[]
+}
+
+model Comment {
+  id        String      @id @default(cuid())
+  itemId    String
+  item      ContentItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  author    String
+  fromClient Boolean    @default(false)
+  kind      String      @default("comment") // comment | change_request | approval
+  body      String
+  createdAt DateTime    @default(now())
+}
+
+model Revision {
+  id        String      @id @default(cuid())
+  itemId    String
+  item      ContentItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  version   Int
+  body      String
+  reason    String?
+  createdAt DateTime    @default(now())
+}
+
+model UsageEvent {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  kind        String    // draft | revision | plan | voice
+  createdAt   DateTime  @default(now())
+}
