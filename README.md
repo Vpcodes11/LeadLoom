@@ -241,7 +241,7 @@ Open http://localhost:3000 and log in with **`demo@leadloom.dev` / `demo1234`**.
 2. **App (Vercel).** Import this repository at [vercel.com/new](https://vercel.com/new) and add the environment variables above. Keep **Fluid compute** enabled.
 3. **Deploy.** The build runs `prisma migrate deploy`, so the schema is applied automatically.
 4. **Stripe.** Create three monthly prices and add a webhook to `https://YOUR_DOMAIN/api/stripe/webhook` for `checkout.session.completed`, `customer.subscription.updated` and `customer.subscription.deleted`.
-5. **Cron.** [`vercel.json`](vercel.json) calls `/api/jobs/run` every 5 minutes to retry stuck AI jobs. On the Vercel Hobby plan crons run at most once a day, which is fine as a safety net.
+5. **Cron.** [`vercel.json`](vercel.json) calls `/api/jobs/run` once a day (the Vercel Hobby limit) to retry stuck AI jobs. On Vercel Pro, change the schedule to `*/5 * * * *` for faster recovery.
 
 ---
 
