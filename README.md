@@ -8,7 +8,8 @@ Needs Node 20+ and Postgres (local, Docker, or a free Neon/Supabase database).
 
 ```bash
 npm install
-cp .env.example .env        # set DATABASE_URL, DIRECT_URL, AUTH_SECRET, CRON_SECRET (+ ANTHROPIC_API_KEY for real AI)
+cp .env.example .env        # set AUTH_SECRET, CRON_SECRET (+ ANTHROPIC_API_KEY for real AI)
+neon env pull               # writes DATABASE_URL (pooled) + DATABASE_URL_UNPOOLED (direct) from Neon
 npx prisma migrate deploy   # create tables
 npm run db:seed             # optional demo data: demo@leadloom.dev / demo1234
 npm run dev                 # http://localhost:3000
@@ -38,8 +39,8 @@ Next.js 15 (App Router, server actions) · TypeScript · Tailwind v4 · Prisma +
 
 ## Deploying (Vercel + Neon)
 
-1. Create a Postgres database on [Neon](https://neon.tech) (free tier). Copy the **pooled** connection string into `DATABASE_URL` and the **direct** one into `DIRECT_URL`.
-2. Import the GitHub repo in Vercel and set the env vars from `.env.example`: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `CRON_SECRET`, `ANTHROPIC_API_KEY`, `APP_URL` (your Vercel URL).
+1. The database is Neon project `holy-bread-24482457`, branch `production` (see `neon.ts`). `neon deploy` provisions it and pulls `DATABASE_URL` (pooled, used by the app) and `DATABASE_URL_UNPOOLED` (direct, used by Prisma Migrate via `directUrl`).
+2. Import the GitHub repo in Vercel and set: `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `AUTH_SECRET`, `CRON_SECRET`, `ANTHROPIC_API_KEY`, `APP_URL` (your Vercel URL). Keep Fluid compute on: `lib/db.ts` uses node-postgres with `attachDatabasePool`.
 3. Deploy. The build runs `prisma migrate deploy`, so tables are created automatically.
 4. Stripe: create 3 monthly prices, set `STRIPE_SECRET_KEY` and `STRIPE_PRICE_STARTER/GROWTH/AGENCY`, add a webhook to `https://YOUR_APP/api/stripe/webhook` for `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, then set `STRIPE_WEBHOOK_SECRET`.
 
