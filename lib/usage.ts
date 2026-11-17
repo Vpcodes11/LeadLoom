@@ -1,18 +1,28 @@
 import "server-only";
 import { db } from "./db";
-import { planOf } from "./plans";
+import { aiLimits, planOf, type AiKind } from "./plans";
 
-export async function piecesUsedThisMonth(workspaceId: string) {
-  const start = new Date();
-  start.setUTCDate(1);
-  start.setUTCHours(0, 0, 0, 0);
-  return db.usageEvent.count({ where: { workspaceId, kind: "draft", createdAt: { gte: start } } });
+const monthStart = () => {
+  const d = new Date();
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+};
+
+export async function usedThisMonth(workspaceId: string, kind: AiKind) {
+  return db.usageEvent.count({ where: { workspaceId, kind, createdAt: { gte: monthStart() } } });
 }
 
-export async function assertCanDraft(workspaceId: string, plan: string) {
-  const used = await piecesUsedThisMonth(workspaceId);
-  const limit = planOf(plan).piecesPerMonth;
-  if (used >= limit) throw new Error(`You've used all ${limit} pieces on your plan this month. Upgrade on the Billing page.`);
+export const piecesUsedThisMonth = (workspaceId: string) => usedThisMonth(workspaceId, "draft");
+
+const NOUN: Record<AiKind, string> = { draft: "drafts", revision: "AI revisions", plan: "funnel plans", voice: "voice profile builds" };
+
+/** Throws a user-facing error when the workspace hit its monthly cap for this AI action. `extra` = pieces about to be queued. */
+export async function assertAiAllowed(workspaceId: string, plan: string, kind: AiKind, extra = 1) {
+  const limit = aiLimits(plan)[kind];
+  const used = await usedThisMonth(workspaceId, kind);
+  if (used + extra > limit) {
+    const left = Math.max(0, limit - used);
+    throw new Error(`Your ${planOf(plan).name} plan includes ${limit} ${NOUN[kind]} a month (${left} left). Upgrade on the Billing page.`);
+  }
 }
 
 export async function assertCanAddBrand(workspaceId: string, plan: string) {

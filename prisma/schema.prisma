@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Workspace {
@@ -19,6 +20,7 @@ model Workspace {
   members            Membership[]
   brands             Brand[]
   usage              UsageEvent[]
+  jobs               Job[]
 }
 
 model User {
@@ -95,6 +97,7 @@ model ContentItem {
   updatedAt  DateTime   @updatedAt
   comments   Comment[]
   revisions  Revision[]
+  jobs       Job[]
 }
 
 model Comment {
@@ -124,4 +127,35 @@ model UsageEvent {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   kind        String    // draft | revision | plan | voice
   createdAt   DateTime  @default(now())
+
+  @@index([workspaceId, kind, createdAt])
+}
+
+/// Background AI work. Runs after the request returns, so long drafts never hit request timeouts.
+model Job {
+  id          String       @id @default(cuid())
+  workspaceId String
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  itemId      String
+  item        ContentItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  kind        String       // draft | revision
+  input       String?      // revision feedback
+  status      String       @default("queued") // queued | running | done | failed
+  error       String?
+  attempts    Int          @default(0)
+  createdAt   DateTime     @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+
+  @@index([status, createdAt])
+  @@index([itemId, status])
+}
+
+/// Sliding-window rate limiting for auth endpoints (works across serverless instances).
+model RateLimitHit {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
 }

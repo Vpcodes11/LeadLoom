@@ -4,20 +4,17 @@ AI content-funnel platform: plan and produce connected blogs, landing pages, ema
 
 ## Run it locally
 
+Needs Node 20+ and Postgres (local, Docker, or a free Neon/Supabase database).
+
 ```bash
 npm install
-cp .env.example .env        # then set AUTH_SECRET (and ANTHROPIC_API_KEY for real AI output)
-npx prisma db push          # creates prisma/dev.db (SQLite)
+cp .env.example .env        # set DATABASE_URL, DIRECT_URL, AUTH_SECRET, CRON_SECRET (+ ANTHROPIC_API_KEY for real AI)
+npx prisma migrate deploy   # create tables
 npm run db:seed             # optional demo data: demo@leadloom.dev / demo1234
 npm run dev                 # http://localhost:3000
 ```
 
 Without `ANTHROPIC_API_KEY` the app runs in **demo mode** with placeholder AI output, so you can click through every flow.
-
-```bash
-npm test                    # QA engine unit tests
-npm run build               # production build (type-checks everything)
-```
 
 ## What's in the MVP
 
@@ -37,14 +34,18 @@ npm run build               # production build (type-checks everything)
 
 ## Stack
 
-Next.js 15 (App Router, server actions) · TypeScript · Tailwind v4 · Prisma (SQLite in dev) · Anthropic SDK (`claude-opus-5-5`, structured outputs, server-side refusal fallback) · Stripe.
+Next.js 15 (App Router, server actions) · TypeScript · Tailwind v4 · Prisma + Postgres · Anthropic SDK (`claude-opus-5-5`, structured outputs, server-side refusal fallback) · Stripe.
 
-## Going to production
+## Deploying (Vercel + Neon)
 
-1. Switch `provider = "sqlite"` to `"postgresql"` in `prisma/schema.prisma` and set `DATABASE_URL` (Neon, Supabase, Railway…).
-2. Set `AUTH_SECRET`, `ANTHROPIC_API_KEY`, `APP_URL`.
-3. Create 3 recurring prices in Stripe; set `STRIPE_SECRET_KEY`, `STRIPE_PRICE_STARTER/GROWTH/AGENCY`, and point a webhook at `/api/stripe/webhook` (events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`) → `STRIPE_WEBHOOK_SECRET`.
-4. Deploy (Vercel works out of the box). Long drafts can take 30-90s: use a plan whose function timeout allows that, or move drafting to a background job (see roadmap).
+1. Create a Postgres database on [Neon](https://neon.tech) (free tier). Copy the **pooled** connection string into `DATABASE_URL` and the **direct** one into `DIRECT_URL`.
+2. Import the GitHub repo in Vercel and set the env vars from `.env.example`: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `CRON_SECRET`, `ANTHROPIC_API_KEY`, `APP_URL` (your Vercel URL).
+3. Deploy. The build runs `prisma migrate deploy`, so tables are created automatically.
+4. Stripe: create 3 monthly prices, set `STRIPE_SECRET_KEY` and `STRIPE_PRICE_STARTER/GROWTH/AGENCY`, add a webhook to `https://YOUR_APP/api/stripe/webhook` for `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, then set `STRIPE_WEBHOOK_SECRET`.
+
+**How long AI work runs:** drafts and revisions are background jobs (`lib/jobs.ts`). They start right after the request returns (`after()`), up to 3 at a time, and pages auto-refresh until they finish. AI pages set `maxDuration = 300`. A cron (`vercel.json`, every 5 min) retries stuck jobs; on the Vercel Hobby plan crons run at most daily, which is fine as a safety net.
+
+**Abuse limits:** monthly caps per AI action (drafts, revisions = 3x drafts, funnel plans, voice builds) per plan in `lib/plans.ts`; failed jobs are refunded. Signup is limited to 3 accounts per IP per day; login to 10 attempts per email and 30 per IP per 15 minutes (`lib/ratelimit.ts`).
 
 ## Roadmap (where to beat the original)
 

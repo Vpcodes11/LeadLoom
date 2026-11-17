@@ -10,6 +10,10 @@ import { ActionButton, ActionForm, Submit } from "@/components/forms";
 import { Editor } from "@/components/editor";
 import { CopyButton } from "@/components/copy-button";
 import { Badge, Button, Card, Empty, PageHeader, Textarea, btnClass, cx } from "@/components/ui";
+import { JobWatcher } from "@/components/job-watcher";
+
+// AI work (inline funnel planning, voice profiles, and background drafts started from here) needs long function time.
+export const maxDuration = 300;
 
 const NEXT: Record<string, { status: string; label: string; variant?: "primary" | "secondary" }[]> = {
   draft: [{ status: "in_review", label: "Send to client for review" }, { status: "approved", label: "Approve internally", variant: "secondary" }],
@@ -24,9 +28,12 @@ export default async function ContentPage({ params }: { params: Promise<{ id: st
   const { workspace } = await requireUser();
   const item = await db.contentItem.findFirst({
     where: { id, brand: { workspaceId: workspace.id } },
-    include: { brand: true, funnel: true, comments: { orderBy: { createdAt: "asc" } }, revisions: { orderBy: { version: "desc" }, take: 15 } },
+    include: { brand: true, funnel: true, comments: { orderBy: { createdAt: "asc" } }, revisions: { orderBy: { version: "desc" }, take: 15 }, jobs: { orderBy: { createdAt: "desc" }, take: 1 } },
   });
   if (!item) notFound();
+  const job = item.jobs[0];
+  const working = !!job && (job.status === "queued" || job.status === "running");
+  const failed = job?.status === "failed" ? job : null;
   const qa: QaReport | null = item.qaReport ? JSON.parse(item.qaReport) : null;
   const back = item.funnel ? { href: `/app/funnels/${item.funnel.id}`, label: item.funnel.name } : { href: `/app/brands/${item.brandId}`, label: item.brand.name };
 
@@ -43,6 +50,18 @@ export default async function ContentPage({ params }: { params: Promise<{ id: st
         </>}
       />
 
+      <JobWatcher active={working} />
+      {working && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          {job!.kind === "revision" ? "The AI is revising this piece" : "The AI is writing this piece"}. This usually takes 30-90 seconds. You can leave this page.
+        </div>
+      )}
+      {failed && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          The last AI {failed.kind} failed: {failed.error}. It didn&apos;t count toward your plan. Try again.
+        </div>
+      )}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card>
@@ -54,6 +73,8 @@ export default async function ContentPage({ params }: { params: Promise<{ id: st
                 </div>
                 <Editor key={item.version} body={item.body} html={renderMarkdown(item.body)} action={saveBody.bind(null, item.id)} />
               </>
+            ) : working ? (
+              <div className="py-16 text-center text-slate-500">Draft on its way...</div>
             ) : (
               <div className="py-12 text-center">
                 <p className="mb-4 text-slate-600">No draft yet. The AI writer will use the brief, the brand&apos;s voice profile and its proof points.</p>
@@ -81,7 +102,7 @@ export default async function ContentPage({ params }: { params: Promise<{ id: st
             </Card>
           )}
 
-          {item.body && (
+          {item.body && !working && (
             <Card>
               <h2 className="font-semibold">Revise with AI</h2>
               <p className="mb-3 text-xs text-slate-500">Paste client feedback or your own notes. Everything else stays the same.</p>
@@ -99,7 +120,7 @@ export default async function ContentPage({ params }: { params: Promise<{ id: st
                 <div key={k}><dt className="text-xs font-semibold uppercase text-slate-500">{k}</dt><dd>{v}</dd></div>
               ))}
             </dl>
-            {item.body && (
+            {item.body && !working && (
               <div className="mt-3"><ActionButton action={generateDraft.bind(null, item.id)} variant="secondary" size="sm" pending="Rewriting..." confirm="Write a completely new draft? The current one stays in version history.">Write fresh draft</ActionButton></div>
             )}
           </Card>

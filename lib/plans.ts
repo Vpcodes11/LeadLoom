@@ -18,3 +18,16 @@ export const PLANS: Record<PlanId, {
 export function planOf(id: string) {
   return PLANS[(id as PlanId)] ?? PLANS.trial;
 }
+
+export type AiKind = "draft" | "revision" | "plan" | "voice";
+
+/** Monthly caps per AI action. Drafts are the headline number; the rest stop free-AI abuse. */
+export function aiLimits(planId: string): Record<AiKind, number> {
+  const p = planOf(planId);
+  return {
+    draft: p.piecesPerMonth,
+    revision: p.piecesPerMonth * 3,
+    plan: Math.max(3, Math.ceil(p.piecesPerMonth / 3)),
+    voice: Math.max(3, p.brands * 3),
+  };
+}

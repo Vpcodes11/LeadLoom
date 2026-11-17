@@ -244,7 +244,8 @@ function mockPlan(b: BrandContext, goal: string, n: number): FunnelPlan {
   return { strategy: `(Demo mode) A ${n}-piece funnel for ${b.audience} that moves readers from problem awareness to ${goal}. Add an ANTHROPIC_API_KEY for a real AI-generated strategy.`, items };
 }
 
-function mockDraft(b: BrandContext, brief: Brief) {
+async function mockDraft(b: BrandContext, brief: Brief) {
+  await new Promise((r) => setTimeout(r, 2000)); // simulate AI latency so the background-job UI is exercised
   return `# ${brief.title}
 
 > **Demo mode.** Add an \`ANTHROPIC_API_KEY\` to \`.env\` to generate real drafts in ${b.name}'s voice.

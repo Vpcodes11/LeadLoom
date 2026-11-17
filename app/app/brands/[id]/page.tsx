@@ -11,6 +11,9 @@ import { ContentTable } from "@/components/content-table";
 import { CopyButton } from "@/components/copy-button";
 import { Badge, Button, Card, Empty, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
 
+// AI work (inline funnel planning, voice profiles, and background drafts started from here) needs long function time.
+export const maxDuration = 300;
+
 export default async function BrandPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { workspace } = await requireUser();

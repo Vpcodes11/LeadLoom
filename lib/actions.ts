@@ -5,10 +5,11 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
 import { createSession, destroySession, requireUser } from "./auth";
-import { extractVoice, planFunnel, writeDraft, reviseDraft } from "./ai";
-import { brandContext, parseVoice } from "./brand";
-import { runQa } from "./qa";
-import { assertCanAddBrand, assertCanDraft } from "./usage";
+import { extractVoice, planFunnel } from "./ai";
+import { brandContext } from "./brand";
+import { ACTIVE, enqueue, qaFor } from "./jobs";
+import { clientIp, rateLimit } from "./ratelimit";
+import { assertAiAllowed, assertCanAddBrand } from "./usage";
 
 export type ActionState = { error?: string; ok?: string } | undefined;
 
@@ -23,6 +24,7 @@ export async function signup(_: ActionState, f: FormData): Promise<ActionState> 
   const password = str(f, "password");
   const company = str(f, "company") || `${name}'s workspace`;
   if (!email.includes("@") || password.length < 8 || !name) return { error: "Enter your name, a valid email and a password of 8+ characters." };
+  if (!(await rateLimit(`signup:${await clientIp()}`, 3, 86_400_000))) return { error: "Too many accounts created from this network today. Try again tomorrow." };
   if (await db.user.findUnique({ where: { email } })) return { error: "An account with this email already exists." };
   const user = await db.user.create({
     data: {
@@ -35,7 +37,12 @@ export async function signup(_: ActionState, f: FormData): Promise<ActionState> 
 }
 
 export async function login(_: ActionState, f: FormData): Promise<ActionState> {
-  const user = await db.user.findUnique({ where: { email: str(f, "email").toLowerCase() } });
+  const email = str(f, "email").toLowerCase();
+  const ip = await clientIp();
+  if (!(await rateLimit(`login:${email}`, 10, 15 * 60_000)) || !(await rateLimit(`login-ip:${ip}`, 30, 15 * 60_000))) {
+    return { error: "Too many login attempts. Wait 15 minutes and try again." };
+  }
+  const user = await db.user.findUnique({ where: { email } });
   if (!user || !(await bcrypt.compare(str(f, "password"), user.passwordHash))) return { error: "Wrong email or password." };
   await createSession(user.id);
   redirect("/app");
@@ -88,8 +95,12 @@ export async function createBrand(_: ActionState, f: FormData): Promise<ActionSt
     const brand = await db.brand.create({ data: { ...data, workspaceId: workspace.id } });
     id = brand.id;
     if (data.voiceSamples && data.voiceSamples.length > 200) {
+      await assertAiAllowed(workspace.id, workspace.plan, "voice");
       const voice = await extractVoice(brandContext(brand), data.voiceSamples);
-      await db.brand.update({ where: { id }, data: { voiceProfile: JSON.stringify(voice) } });
+      await db.$transaction([
+        db.brand.update({ where: { id }, data: { voiceProfile: JSON.stringify(voice) } }),
+        db.usageEvent.create({ data: { workspaceId: workspace.id, kind: "voice" } }),
+      ]);
     }
   } catch (e) {
     return { error: errMsg(e) };
@@ -114,6 +125,7 @@ export async function rebuildVoice(brandId: string, _: ActionState): Promise<Act
   try {
     const { brand, workspace } = await ownBrand(brandId);
     if (!brand.voiceSamples || brand.voiceSamples.length < 200) return { error: "Paste at least ~200 characters of existing writing in Voice samples first." };
+    await assertAiAllowed(workspace.id, workspace.plan, "voice");
     const voice = await extractVoice(brandContext(brand), brand.voiceSamples);
     await db.brand.update({ where: { id: brandId }, data: { voiceProfile: JSON.stringify(voice) } });
     await db.usageEvent.create({ data: { workspaceId: workspace.id, kind: "voice" } });
@@ -139,6 +151,7 @@ export async function createFunnel(brandId: string, _: ActionState, f: FormData)
   let funnelId: string;
   try {
     const { brand, workspace } = await ownBrand(brandId);
+    await assertAiAllowed(workspace.id, workspace.plan, "plan");
     const plan = await planFunnel(brandContext(brand), goal, pieces);
     const funnel = await db.funnel.create({
       data: {
@@ -183,44 +196,38 @@ export async function requestContent(brandId: string, _: ActionState, f: FormDat
   redirect(`/app/content/${id}`);
 }
 
-function qaFor(item: { format: string; keyword: string | null; cta: string | null }, body: string, voiceJson: string | null) {
-  return JSON.stringify(runQa({ body, format: item.format, keyword: item.keyword, cta: item.cta, bannedWords: parseVoice(voiceJson)?.bannedWords }));
+async function hasActiveJob(itemId: string) {
+  return (await db.job.count({ where: { itemId, status: { in: ACTIVE } } })) > 0;
 }
 
 export async function generateDraft(itemId: string, _: ActionState): Promise<ActionState> {
   try {
     const { item, workspace } = await ownItem(itemId);
-    await assertCanDraft(workspace.id, workspace.plan);
-    const body = await writeDraft(brandContext(item.brand), { ...item, funnelGoal: item.funnel?.goal });
-    const version = item.version + 1;
-    await db.$transaction([
-      db.contentItem.update({ where: { id: itemId }, data: { body, version, status: "draft", qaReport: qaFor(item, body, item.brand.voiceProfile) } }),
-      db.revision.create({ data: { itemId, version, body, reason: "First draft" } }),
-      db.usageEvent.create({ data: { workspaceId: workspace.id, kind: "draft" } }),
-    ]);
+    if (await hasActiveJob(itemId)) return { ok: "Already writing this piece..." };
+    await assertAiAllowed(workspace.id, workspace.plan, "draft");
+    await enqueue(workspace.id, [{ itemId: item.id, kind: "draft" }]);
     revalidatePath(`/app/content/${itemId}`);
-    return { ok: "Draft ready" };
+    return { ok: "Writing the draft. This page updates automatically." };
   } catch (e) {
     return { error: errMsg(e) };
   }
 }
 
-/** Draft every planned piece in a funnel, one after another. */
+/** Queue a draft for every piece in a funnel that doesn't have one yet. */
 export async function generateFunnelDrafts(funnelId: string, _: ActionState): Promise<ActionState> {
   try {
     const { workspace } = await requireUser();
-    const funnel = await db.funnel.findFirst({ where: { id: funnelId, brand: { workspaceId: workspace.id } }, include: { items: true } });
+    const funnel = await db.funnel.findFirst({
+      where: { id: funnelId, brand: { workspaceId: workspace.id } },
+      include: { items: { include: { jobs: { where: { status: { in: ACTIVE } } } } } },
+    });
     if (!funnel) return { error: "Funnel not found" };
-    const todo = funnel.items.filter((i) => !i.body).sort((a, b) => a.position - b.position);
-    if (todo.length === 0) return { ok: "Every piece already has a draft." };
-    let done = 0;
-    for (const it of todo) {
-      const r = await generateDraft(it.id, undefined);
-      if (r?.error) return { error: `Drafted ${done} of ${todo.length}. Stopped: ${r.error}` };
-      done++;
-    }
+    const todo = funnel.items.filter((i) => !i.body && i.jobs.length === 0).sort((a, b) => a.position - b.position);
+    if (todo.length === 0) return { ok: "Every piece already has a draft or is being written." };
+    await assertAiAllowed(workspace.id, workspace.plan, "draft", todo.length);
+    await enqueue(workspace.id, todo.map((i) => ({ itemId: i.id, kind: "draft" as const })));
     revalidatePath(`/app/funnels/${funnelId}`);
-    return { ok: `Drafted ${done} piece${done === 1 ? "" : "s"}` };
+    return { ok: `Writing ${todo.length} piece${todo.length === 1 ? "" : "s"}. This page updates automatically.` };
   } catch (e) {
     return { error: errMsg(e) };
   }
@@ -248,16 +255,12 @@ export async function aiRevise(itemId: string, _: ActionState, f: FormData): Pro
   try {
     const { item, workspace, user } = await ownItem(itemId);
     if (!item.body) return { error: "Generate a draft first." };
-    const body = await reviseDraft(brandContext(item.brand), { ...item, funnelGoal: item.funnel?.goal }, item.body, feedback);
-    const version = item.version + 1;
-    await db.$transaction([
-      db.contentItem.update({ where: { id: itemId }, data: { body, version, status: item.status === "changes_requested" ? "draft" : item.status, qaReport: qaFor(item, body, item.brand.voiceProfile) } }),
-      db.revision.create({ data: { itemId, version, body, reason: feedback.slice(0, 300) } }),
-      db.comment.create({ data: { itemId, author: user.name, kind: "comment", body: `AI revision: ${feedback}` } }),
-      db.usageEvent.create({ data: { workspaceId: workspace.id, kind: "revision" } }),
-    ]);
+    if (await hasActiveJob(itemId)) return { error: "The AI is still working on this piece. Wait for it to finish." };
+    await assertAiAllowed(workspace.id, workspace.plan, "revision");
+    await db.comment.create({ data: { itemId, author: user.name, kind: "comment", body: `AI revision requested: ${feedback}` } });
+    await enqueue(workspace.id, [{ itemId, kind: "revision", input: feedback }]);
     revalidatePath(`/app/content/${itemId}`);
-    return { ok: "Revised" };
+    return { ok: "Revising. This page updates automatically." };
   } catch (e) {
     return { error: errMsg(e) };
   }
