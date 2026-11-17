@@ -85,8 +85,14 @@ Every piece across every brand on one board: Requested → Planned → Draft →
 ### 📦 Delivery
 Copy as Markdown or download a `.md` file, ready for WordPress, Webflow, Ghost, Notion or Google Docs.
 
+### 👥 Teams and accounts
+Invite teammates by email or link (per-plan seats), with owner and editor roles. Password reset, change password (signs out other devices) and full workspace deletion.
+
+### 📧 Notifications
+Email alerts when a client approves or requests changes, plus invite and password-reset emails (via Resend).
+
 ### 💳 Plans and billing
-Stripe Checkout, the Stripe customer portal and webhooks, with monthly limits per plan.
+A one-time free trial, then Stripe Checkout, the Stripe customer portal and webhooks, with monthly limits per plan.
 
 ---
 
@@ -167,12 +173,12 @@ Every piece, every brand, every stage.
 
 ## 💰 Pricing
 
-| Plan | Price | Pieces / month | Brands | Client portal |
-|---|---|---|---|---|
-| Trial | Free | 5 | 1 | Review links |
-| Starter | $49/mo | 12 | 1 | Review links |
-| Growth | $149/mo | 40 | 5 | Review links |
-| **Agency** | **$399/mo** | **150** | **50** | **White-label** |
+| Plan | Price | Pieces | Brands | Seats | Client portal |
+|---|---|---|---|---|---|
+| Free trial | Free | 5 (one-time) | 1 | 2 | Review links |
+| Starter | $49/mo | 12 / month | 1 | 2 | Review links |
+| Growth | $149/mo | 40 / month | 5 | 5 | Review links |
+| **Agency** | **$399/mo** | **150 / month** | **50** | **15** | **White-label** |
 
 AI revisions (3× the piece limit), funnel plans and voice profile builds have their own monthly caps, so a plan can't be used for unlimited free AI. Failed AI jobs are refunded automatically. Limits live in [`lib/plans.ts`](lib/plans.ts).
 
@@ -229,6 +235,9 @@ Open http://localhost:3000 and log in with **`demo@leadloom.dev` / `demo1234`**.
 | `APP_URL` | ✅ | Public URL, used for Stripe redirects and client review links. |
 | `CRON_SECRET` | ✅ | Protects `/api/jobs/run`, the stuck-job recovery endpoint. `openssl rand -hex 32` |
 | `ANTHROPIC_API_KEY` | For real AI | Claude API key. Leave empty for demo mode. |
+| `RESEND_API_KEY` | For email | Resend API key. Without it, invites show a copyable link and emails are logged. |
+| `EMAIL_FROM` | For email | Sender, e.g. `Leadloom <noreply@yourdomain.com>` (domain verified in Resend). |
+| `SUPPORT_EMAIL` | Recommended | Contact address shown on the Terms and Privacy pages. |
 | `STRIPE_SECRET_KEY` | For billing | Stripe secret key. |
 | `STRIPE_WEBHOOK_SECRET` | For billing | Signing secret of the webhook below. |
 | `STRIPE_PRICE_STARTER` / `_GROWTH` / `_AGENCY` | For billing | Stripe recurring price IDs. |
@@ -241,7 +250,8 @@ Open http://localhost:3000 and log in with **`demo@leadloom.dev` / `demo1234`**.
 2. **App (Vercel).** Import this repository at [vercel.com/new](https://vercel.com/new) and add the environment variables above. Keep **Fluid compute** enabled.
 3. **Deploy.** The build runs `prisma migrate deploy`, so the schema is applied automatically.
 4. **Stripe.** Create three monthly prices and add a webhook to `https://YOUR_DOMAIN/api/stripe/webhook` for `checkout.session.completed`, `customer.subscription.updated` and `customer.subscription.deleted`.
-5. **Cron.** [`vercel.json`](vercel.json) calls `/api/jobs/run` once a day (the Vercel Hobby limit) to retry stuck AI jobs. On Vercel Pro, change the schedule to `*/5 * * * *` for faster recovery.
+5. **Health check.** `GET /api/health` checks the database and reports which integrations (AI, billing, email) are configured. Point an uptime monitor at it.
+6. **Cron.** [`vercel.json`](vercel.json) calls `/api/jobs/run` once a day (the Vercel Hobby limit) to retry stuck AI jobs. On Vercel Pro, change the schedule to `*/5 * * * *` for faster recovery.
 
 ---
 
@@ -339,7 +349,7 @@ npm test
 
 Unit tests cover the QA engine: word counting, readability, clichés, banned words, unsourced stats, keyword placement and email structure.
 
-The full flow has also been tested end to end in a real browser: signup → brand → voice profile → funnel plan → background drafting → edit → send to client → client requests changes on mobile → board → plan limits → login rate limit → billing.
+The full flow has also been tested end to end in a real browser: signup → brand → voice profile → funnel plan → background drafting → edit → send to client → client requests changes on mobile → board → plan limits → login rate limit → billing; and invite → accept → seat limit → password reset (signs out other devices) → change password → remove teammate → delete workspace. Both suites pass against the live production deployment.
 
 ---
 
@@ -348,7 +358,6 @@ The full flow has also been tested end to end in a real browser: signup → bran
 - [ ] Live SEO data (keyword volume and difficulty) in the funnel planner
 - [ ] One-click publishing to WordPress, Webflow, Ghost and Google Docs
 - [ ] Team members with roles, assignments and due-date reminders
-- [ ] Email notifications for client feedback; password reset
 - [ ] Performance loop: connect Search Console and Analytics, refresh underperforming pieces
 - [ ] Optional human editor pass as a premium add-on
 
