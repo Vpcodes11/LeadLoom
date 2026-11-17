@@ -5,10 +5,15 @@ import { SignJWT, jwtVerify } from "jose";
 import { db } from "./db";
 
 const COOKIE = "ll_session";
-const secret = () => new TextEncoder().encode(process.env.AUTH_SECRET || "dev-secret-change-me");
+const secret = () => {
+  const s = process.env.AUTH_SECRET;
+  if (!s && process.env.NODE_ENV === "production") throw new Error("AUTH_SECRET is not set");
+  return new TextEncoder().encode(s || "dev-secret-change-me");
+};
 
-export async function createSession(userId: string) {
-  const token = await new SignJWT({ sub: userId })
+/** `sv` = the user's sessionVersion; bumping it (password reset/change) signs out every device. */
+export async function createSession(user: { id: string; sessionVersion: number }) {
+  const token = await new SignJWT({ sub: user.id, sv: user.sessionVersion })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("30d")
@@ -26,29 +31,37 @@ export async function destroySession() {
   (await cookies()).delete(COOKIE);
 }
 
-async function currentUserId(): Promise<string | null> {
+async function readSession(): Promise<{ id: string; sv: number } | null> {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret());
-    return typeof payload.sub === "string" ? payload.sub : null;
+    return typeof payload.sub === "string" ? { id: payload.sub, sv: Number(payload.sv ?? 0) } : null;
   } catch {
     return null;
   }
 }
 
-/** Returns the signed-in user and their (first) workspace, or redirects to /login. */
+/** Returns the signed-in user and their workspace, or redirects to /login. */
 export async function requireUser() {
-  const id = await currentUserId();
-  if (!id) redirect("/login");
+  const s = await readSession();
+  if (!s) redirect("/login");
   const user = await db.user.findUnique({
-    where: { id },
-    include: { memberships: { include: { workspace: true } } },
+    where: { id: s.id },
+    include: { memberships: { include: { workspace: true }, orderBy: { id: "asc" } } },
   });
-  if (!user || user.memberships.length === 0) redirect("/login");
-  return { user, workspace: user.memberships[0].workspace, role: user.memberships[0].role };
+  if (!user || user.sessionVersion !== s.sv || user.memberships.length === 0) redirect("/login");
+  const m = user.memberships[0];
+  return { user, workspace: m.workspace, role: m.role };
+}
+
+/** Like requireUser, but only workspace owners (billing, team, deleting the account). */
+export async function requireOwner() {
+  const ctx = await requireUser();
+  if (ctx.role !== "owner") throw new Error("Only the workspace owner can do this.");
+  return ctx;
 }
 
 export async function getOptionalUserId() {
-  return currentUserId();
+  return (await readSession())?.id ?? null;
 }

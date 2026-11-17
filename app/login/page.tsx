@@ -11,6 +11,7 @@ export default function Login() {
         <Card>
           <h1 className="mb-5 text-xl font-semibold">Log in</h1>
           <LoginForm />
+          <Link href="/forgot-password" className="mt-4 block text-sm text-brand-600">Forgot your password?</Link>
         </Card>
         <p className="mt-4 text-center text-sm text-slate-600">New here? <Link className="text-brand-600" href="/signup">Create an account</Link></p>
       </div>

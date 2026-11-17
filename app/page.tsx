@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { LinkButton, Card } from "@/components/ui";
 import { PLANS, type PlanId } from "@/lib/plans";
@@ -48,7 +49,7 @@ export default function Home() {
 
       <section id="pricing" className="mx-auto max-w-5xl px-4 sm:px-6 py-20">
         <h2 className="text-center text-3xl font-bold">Simple monthly plans</h2>
-        <p className="text-center text-slate-600 mt-2">No contracts. Pause or cancel anytime.</p>
+        <p className="text-center text-slate-600 mt-2">Start with 5 free pieces, no card needed. No contracts, cancel anytime.</p>
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {plans.map((p) => (
             <Card key={p.id} className={p.id === "growth" ? "ring-2 ring-brand-500" : ""}>
@@ -58,6 +59,7 @@ export default function Home() {
               <ul className="mt-4 space-y-1.5 text-sm text-slate-700">
                 <li>✓ {p.piecesPerMonth} pieces per month</li>
                 <li>✓ {p.brands} brand{p.brands > 1 ? "s" : ""}</li>
+                <li>✓ {p.seats} team seat{p.seats > 1 ? "s" : ""}</li>
                 <li>✓ Voice profiles and funnel planner</li>
                 <li>✓ Quality checks on every draft</li>
                 <li>{p.whiteLabel ? "✓ White-label client review portal" : "✓ Client review links"}</li>
@@ -68,7 +70,9 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-slate-200 py-8 text-center text-sm text-slate-500">© {new Date().getFullYear()} Leadloom</footer>
+      <footer className="border-t border-slate-200 py-8 text-center text-sm text-slate-500">
+        © {new Date().getFullYear()} Leadloom · <Link href="/terms" className="hover:underline">Terms</Link> · <Link href="/privacy" className="hover:underline">Privacy</Link>
+      </footer>
     </div>
   );
 }

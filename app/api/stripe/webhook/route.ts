@@ -27,13 +27,17 @@ export async function POST(req: Request) {
     }
   }
 
-  if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+  if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
     const sub = event.data.object;
     const workspaceId = sub.metadata?.workspaceId;
     if (workspaceId) {
-      const active = sub.status === "active" || sub.status === "trialing";
+      // past_due keeps access while Stripe retries the card; cancellation arrives as subscription.deleted.
+      const active = sub.status === "active" || sub.status === "trialing" || sub.status === "past_due";
       const plan = event.type === "customer.subscription.deleted" || !active ? "trial" : sub.metadata?.plan ?? "trial";
-      await db.workspace.update({ where: { id: workspaceId }, data: { plan, subscriptionStatus: sub.status } });
+      await db.workspace.updateMany({
+        where: { id: workspaceId },
+        data: { plan, subscriptionStatus: sub.status, stripeSubscriptionId: event.type === "customer.subscription.deleted" ? null : sub.id, stripeCustomerId: String(sub.customer) },
+      });
     }
   }
   return NextResponse.json({ received: true });

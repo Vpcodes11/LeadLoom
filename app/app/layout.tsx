@@ -4,14 +4,14 @@ import { db } from "@/lib/db";
 import { logout } from "@/lib/actions";
 import { Logo } from "@/components/logo";
 import { planOf } from "@/lib/plans";
-import { piecesUsedThisMonth } from "@/lib/usage";
+import { piecesUsed } from "@/lib/usage";
 import { aiEnabled } from "@/lib/ai";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, workspace } = await requireUser();
   const brands = await db.brand.findMany({ where: { workspaceId: workspace.id }, orderBy: { createdAt: "asc" }, select: { id: true, name: true } });
   const plan = planOf(workspace.plan);
-  const used = await piecesUsedThisMonth(workspace.id);
+  const used = await piecesUsed(workspace.id, workspace.plan);
   const nav = [
     { href: "/app", label: "Dashboard" },
     { href: "/app/board", label: "Content board" },

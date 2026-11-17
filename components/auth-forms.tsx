@@ -15,6 +15,7 @@ export function SignupForm() {
       <Field label="Password" hint="At least 8 characters"><Input name="password" type="password" required minLength={8} autoComplete="new-password" /></Field>
       <Msg state={state} />
       <Submit pending="Creating account...">Create account</Submit>
+      <p className="text-xs text-slate-500">By creating an account you agree to the <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>.</p>
     </form>
   );
 }

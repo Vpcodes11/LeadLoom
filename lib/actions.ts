@@ -10,6 +10,7 @@ import { brandContext } from "./brand";
 import { ACTIVE, enqueue, qaFor } from "./jobs";
 import { clientIp, rateLimit } from "./ratelimit";
 import { assertAiAllowed, assertCanAddBrand } from "./usage";
+import { layout, sendEmail } from "./email";
 
 export type ActionState = { error?: string; ok?: string } | undefined;
 
@@ -32,7 +33,7 @@ export async function signup(_: ActionState, f: FormData): Promise<ActionState> 
       memberships: { create: { role: "owner", workspace: { create: { name: company } } } },
     },
   });
-  await createSession(user.id);
+  await createSession(user);
   redirect("/app");
 }
 
@@ -44,7 +45,7 @@ export async function login(_: ActionState, f: FormData): Promise<ActionState> {
   }
   const user = await db.user.findUnique({ where: { email } });
   if (!user || !(await bcrypt.compare(str(f, "password"), user.passwordHash))) return { error: "Wrong email or password." };
-  await createSession(user.id);
+  await createSession(user);
   redirect("/app");
 }
 
@@ -312,7 +313,10 @@ export async function clientFeedback(token: string, itemId: string, _: ActionSta
   const decision = str(f, "decision"); // approve | changes
   const name = str(f, "name") || "Client";
   const body = str(f, "body");
-  const item = await db.contentItem.findFirst({ where: { id: itemId, brand: { reviewToken: token }, status: { in: ["in_review", "changes_requested", "approved"] } } });
+  const item = await db.contentItem.findFirst({
+    where: { id: itemId, brand: { reviewToken: token }, status: { in: ["in_review", "changes_requested", "approved"] } },
+    include: { brand: { include: { workspace: { include: { members: { include: { user: true } } } } } } },
+  });
   if (!item) return { error: "This piece is no longer open for review." };
   if (decision === "changes" && !body) return { error: "Tell us what to change." };
   await db.$transaction([
@@ -320,6 +324,15 @@ export async function clientFeedback(token: string, itemId: string, _: ActionSta
     db.comment.create({ data: { itemId, author: name, fromClient: true, kind: decision === "approve" ? "approval" : "change_request", body: body || "Approved" } }),
   ]);
   // No revalidatePath: it would refresh the portal and hide the confirmation. App pages are dynamic, so they show the new status on next load.
+  const approved = decision === "approve";
+  await sendEmail(
+    item.brand.workspace.members.map((m) => m.user.email),
+    approved ? `${name} approved "${item.title}"` : `${name} requested changes to "${item.title}"`,
+    layout(approved ? "Content approved" : "Changes requested", [
+      `${name} from ${item.brand.name} ${approved ? "approved" : "requested changes to"} "${item.title}".`,
+      ...(body && !approved ? [`Their feedback: "${body}"`] : []),
+    ], { label: "Open in Leadloom", url: `${process.env.APP_URL ?? "http://localhost:3000"}/app/content/${item.id}` }),
+  );
   return { ok: decision === "approve" ? "Approved — thank you!" : "Feedback sent. We'll revise it." };
 }
 

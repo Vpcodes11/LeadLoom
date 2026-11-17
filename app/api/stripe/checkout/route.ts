@@ -4,7 +4,9 @@ import { PLANS, type PlanId } from "@/lib/plans";
 import { stripe, stripeEnabled } from "@/lib/stripe";
 
 export async function POST(req: Request) {
-  const { workspace, user } = await requireUser();
+  const { workspace, user, role } = await requireUser();
+  const base0 = process.env.APP_URL ?? "http://localhost:3000";
+  if (role !== "owner") return NextResponse.redirect(`${base0}/app/billing?error=owner`, 303);
   const plan = String((await req.formData()).get("plan")) as PlanId;
   const priceId = PLANS[plan]?.priceEnv ? process.env[PLANS[plan].priceEnv!] : undefined;
   const base = process.env.APP_URL ?? "http://localhost:3000";
