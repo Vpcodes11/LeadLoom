@@ -8,7 +8,7 @@
 
 Plan and produce blogs, landing pages, email sequences, case studies and social posts that work together, written in each brand's own voice, quality-checked, reviewed by the client and delivered. All in one place.
 
-[Features](#-features) · [Test plan](docs/TEST-PLAN.md) · [How it works](#-how-it-works) · [Screenshots](#-screenshots) · [Pricing](#-pricing) · [Quick start](#-quick-start) · [Deploy](#-deploy-vercel--neon) · [Architecture](#-architecture)
+[Features](#-features) · [Test plan](docs/TEST-PLAN.md) · [Sales kit](docs/SALES-KIT.md) · [How it works](#-how-it-works) · [Screenshots](#-screenshots) · [Pricing](#-pricing) · [Quick start](#-quick-start) · [Deploy](#-deploy-vercel--neon) · [Architecture](#-architecture)
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-000?logo=nextdotjs)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
