@@ -60,14 +60,16 @@ export function AcceptInviteForm({ action, email }: { action: Action; email: str
   );
 }
 
-export function ChangePasswordForm({ action }: { action: Action }) {
+export function ChangePasswordForm({ action, hasPassword = true }: { action: Action; hasPassword?: boolean }) {
   const [state, run] = useActionState(action, undefined);
   return (
     <form action={run} className="space-y-3">
-      <Field label="Current password"><Input name="current" type="password" required autoComplete="current-password" /></Field>
+      {hasPassword
+        ? <Field label="Current password"><Input name="current" type="password" required autoComplete="current-password" /></Field>
+        : <p className="text-sm text-slate-600">You sign in with Google. You can also set a password to log in with your email.</p>}
       <Field label="New password" hint="At least 8 characters"><Input name="password" type="password" required minLength={8} autoComplete="new-password" /></Field>
       <Msg state={state} />
-      <Submit variant="secondary" pending="Saving...">Change password</Submit>
+      <Submit variant="secondary" pending="Saving...">{hasPassword ? "Change password" : "Set password"}</Submit>
     </form>
   );
 }

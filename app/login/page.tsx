@@ -1,20 +1,21 @@
 import Link from "next/link";
-import { Logo } from "@/components/logo";
-import { Card } from "@/components/ui";
+import { AuthShell } from "@/components/auth-shell";
 import { LoginForm } from "@/components/auth-forms";
+import { GoogleButton, GOOGLE_ERRORS } from "@/components/google-button";
 
-export default function Login() {
+// Rendered per request so the Google button follows the current env (no rebuild needed).
+export const dynamic = "force-dynamic";
+
+export const metadata = { title: "Log in · Leadloom" };
+
+export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
   return (
-    <div className="grid min-h-screen place-items-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex justify-center"><Logo /></div>
-        <Card>
-          <h1 className="mb-5 text-xl font-semibold">Log in</h1>
-          <LoginForm />
-          <Link href="/forgot-password" className="mt-4 block text-sm text-brand-600">Forgot your password?</Link>
-        </Card>
-        <p className="mt-4 text-center text-sm text-slate-600">New here? <Link className="text-brand-600" href="/signup">Create an account</Link></p>
-      </div>
-    </div>
+    <AuthShell title="Log in" footer={<>New here? <Link className="text-brand-600" href="/signup">Create an account</Link></>}>
+      {error && GOOGLE_ERRORS[error] && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">{GOOGLE_ERRORS[error]}</p>}
+      <GoogleButton />
+      <LoginForm />
+      <Link href="/forgot-password" className="mt-4 block text-sm text-brand-600">Forgot your password?</Link>
+    </AuthShell>
   );
 }

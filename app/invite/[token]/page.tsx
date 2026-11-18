@@ -4,6 +4,7 @@ import { hashToken } from "@/lib/tokens";
 import { acceptInvite } from "@/lib/account-actions";
 import { AuthShell } from "@/components/auth-shell";
 import { AcceptInviteForm } from "@/components/account-forms";
+import { GoogleButton } from "@/components/google-button";
 
 export const metadata = { title: "Join your team · Leadloom", robots: { index: false } };
 
@@ -19,6 +20,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   }
   return (
     <AuthShell title={`Join ${invite.workspace.name}`} sub="Create your login to start working with the team.">
+      <GoogleButton invite={token} label={`Join with Google (${invite.email})`} />
       <AcceptInviteForm action={acceptInvite.bind(null, token)} email={invite.email} />
     </AuthShell>
   );

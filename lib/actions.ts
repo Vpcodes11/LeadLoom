@@ -44,7 +44,8 @@ export async function login(_: ActionState, f: FormData): Promise<ActionState> {
     return { error: "Too many login attempts. Wait 15 minutes and try again." };
   }
   const user = await db.user.findUnique({ where: { email } });
-  if (!user || !(await bcrypt.compare(str(f, "password"), user.passwordHash))) return { error: "Wrong email or password." };
+  if (user && !user.passwordHash) return { error: "This account signs in with Google. Use \"Continue with Google\", or reset your password to add one." };
+  if (!user || !(await bcrypt.compare(str(f, "password"), user.passwordHash!))) return { error: "Wrong email or password." };
   await createSession(user);
   redirect("/app");
 }

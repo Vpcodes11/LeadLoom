@@ -86,7 +86,7 @@ Every piece across every brand on one board: Requested → Planned → Draft →
 Copy as Markdown or download a `.md` file, ready for WordPress, Webflow, Ghost, Notion or Google Docs.
 
 ### 👥 Teams and accounts
-Invite teammates by email or link (per-plan seats), with owner and editor roles. Password reset, change password (signs out other devices) and full workspace deletion.
+Sign up and log in with email or **Continue with Google** (existing accounts are linked automatically). Invite teammates by email or link (per-plan seats), with owner and editor roles. Password reset, change password (signs out other devices) and full workspace deletion.
 
 ### 📧 Notifications
 Email alerts when a client approves or requests changes, plus invite and password-reset emails (via Resend).
@@ -235,6 +235,7 @@ Open http://localhost:3000 and log in with **`demo@leadloom.dev` / `demo1234`**.
 | `APP_URL` | ✅ | Public URL, used for Stripe redirects and client review links. |
 | `CRON_SECRET` | ✅ | Protects `/api/jobs/run`, the stuck-job recovery endpoint. `openssl rand -hex 32` |
 | `ANTHROPIC_API_KEY` | For real AI | Claude API key. Leave empty for demo mode. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | For Google sign-in | OAuth web client from Google Cloud Console. Redirect URI: `{APP_URL}/api/auth/google/callback`. The button is hidden until both are set. |
 | `RESEND_API_KEY` | For email | Resend API key. Without it, invites show a copyable link and emails are logged. |
 | `EMAIL_FROM` | For email | Sender, e.g. `Leadloom <noreply@yourdomain.com>` (domain verified in Resend). |
 | `SUPPORT_EMAIL` | Recommended | Contact address shown on the Terms and Privacy pages. |
@@ -302,7 +303,7 @@ flowchart TB
 | UI | Tailwind CSS v4 |
 | Database | Neon Postgres, Prisma 6 with the `pg` driver adapter |
 | AI | Anthropic Claude via `@anthropic-ai/sdk`, structured outputs, server-side refusal fallback |
-| Auth | Email and password, bcrypt, signed JWT session cookie (`jose`) |
+| Auth | Email and password (bcrypt) and Google sign-in (OAuth 2.0 + PKCE), signed JWT session cookie (`jose`) |
 | Billing | Stripe Checkout, customer portal, webhooks |
 | Hosting | Vercel (Fluid compute, Cron) |
 

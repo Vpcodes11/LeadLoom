@@ -9,7 +9,7 @@ export default function Privacy() {
 
       <h2>What we collect</h2>
       <ul>
-        <li><strong>Account data:</strong> name, email address and a hashed password (we never store your password in readable form).</li>
+        <li><strong>Account data:</strong> name, email address and a hashed password (we never store your password in readable form). If you sign in with Google, we receive your name, email address and Google account ID, and nothing else.</li>
         <li><strong>Workspace content:</strong> brand details, writing samples, briefs, drafts, comments and review feedback you or your clients add.</li>
         <li><strong>Billing data:</strong> handled by Stripe. We store your Stripe customer and subscription IDs, never your card details.</li>
         <li><strong>Usage and security data:</strong> counts of AI actions for plan limits, and IP addresses briefly for rate limiting and abuse prevention.</li>
@@ -25,6 +25,7 @@ export default function Privacy() {
         <li><strong>Neon</strong> (database hosting)</li>
         <li><strong>Vercel</strong> (application hosting)</li>
         <li><strong>Stripe</strong> (payments)</li>
+        <li><strong>Google</strong> (optional sign-in)</li>
         <li><strong>Resend</strong> (transactional email, such as password resets and review notifications)</li>
       </ul>
 

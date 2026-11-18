@@ -67,7 +67,8 @@ export default async function Settings() {
 
       <Card>
         <h2 className="mb-4 font-semibold">Password</h2>
-        <ChangePasswordForm action={changePassword} />
+        {user.googleId && <p className="mb-3 text-sm text-slate-600">✓ Google sign-in is connected for {user.email}.</p>}
+        <ChangePasswordForm action={changePassword} hasPassword={!!user.passwordHash} />
       </Card>
 
       {isOwner && (

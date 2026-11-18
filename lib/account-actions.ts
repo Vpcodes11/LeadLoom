@@ -53,11 +53,12 @@ export async function resetPassword(token: string, _: FormState, f: FormData): P
 export async function changePassword(_: FormState, f: FormData): Promise<FormState> {
   const { user } = await requireUser();
   const next = str(f, "password");
-  if (!(await bcrypt.compare(str(f, "current"), user.passwordHash))) return { error: "Your current password is wrong." };
+  // Google-only accounts have no password yet; they're already signed in, so they can set one.
+  if (user.passwordHash && !(await bcrypt.compare(str(f, "current"), user.passwordHash))) return { error: "Your current password is wrong." };
   if (next.length < 8) return { error: "Use at least 8 characters." };
   const updated = await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, 10), sessionVersion: { increment: 1 } } });
   await createSession(updated); // keep this device signed in, sign out every other one
-  return { ok: "Password changed. Other devices have been signed out." };
+  return { ok: user.passwordHash ? "Password changed. Other devices have been signed out." : "Password set. You can now also log in with your email." };
 }
 
 // ---------- Team ----------
