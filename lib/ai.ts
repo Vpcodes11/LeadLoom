@@ -3,12 +3,24 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod/v4";
 import { FORMATS, type Format } from "./formats";
+import { geminiEnabled, geminiJson, geminiText } from "./gemini";
 
 const MODEL = "claude-opus-5-5";
 // Server-side refusal fallback: if the main model declines, the API reroutes inside the same call.
 const BETAS = ["server-side-fallback-2026-07-01"];
 
-export const aiEnabled = () => Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
+const claudeEnabled = () => Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
+
+/** Which AI provider runs: AI_PROVIDER forces one; otherwise Gemini (free tier) wins when its key is set. */
+export function aiProvider(): "gemini" | "claude" | null {
+  const forced = process.env.AI_PROVIDER;
+  if (forced === "claude" && claudeEnabled()) return "claude";
+  if (forced === "gemini" && geminiEnabled()) return "gemini";
+  if (geminiEnabled()) return "gemini";
+  if (claudeEnabled()) return "claude";
+  return null;
+}
+export const aiEnabled = () => aiProvider() !== null;
 
 let _client: Anthropic | null = null;
 const client = () => (_client ??= new Anthropic());
@@ -112,6 +124,7 @@ function textOf(msg: Anthropic.Beta.BetaMessage) {
 }
 
 async function writeText(system: string, user: string, effort: "medium" | "high" = "high") {
+  if (aiProvider() === "gemini") return geminiText(system, user, effort);
   const stream = client().beta.messages.stream({
     model: MODEL,
     max_tokens: 32000,
@@ -128,6 +141,8 @@ async function writeText(system: string, user: string, effort: "medium" | "high"
 
 export async function extractVoice(brand: BrandContext, samples: string): Promise<VoiceProfile> {
   if (!aiEnabled()) return mockVoice(brand);
+  const voicePrompt = `Analyse the writing samples below and build a brand voice profile that another writer could follow to sound exactly like this brand. Base every observation on the samples; quote real lines for sampleLines.\n\n${brandBlock({ ...brand, voiceProfile: null })}\n\n<samples>\n${samples}\n</samples>`;
+  if (aiProvider() === "gemini") return geminiJson(VoiceProfileSchema, voicePrompt);
   const res = await client().beta.messages.parse({
     model: MODEL,
     max_tokens: 16000,
@@ -136,7 +151,7 @@ export async function extractVoice(brand: BrandContext, samples: string): Promis
     output_config: { effort: "medium", format: betaZodOutputFormat(VoiceProfileSchema) },
     messages: [{
       role: "user",
-      content: `Analyse the writing samples below and build a brand voice profile that another writer could follow to sound exactly like this brand. Base every observation on the samples; quote real lines for sampleLines.\n\n${brandBlock({ ...brand, voiceProfile: null })}\n\n<samples>\n${samples}\n</samples>`,
+      content: voicePrompt,
     }],
   });
   if (res.stop_reason === "refusal" || !res.parsed_output) throw new Error("Could not build a voice profile from these samples.");
@@ -145,16 +160,8 @@ export async function extractVoice(brand: BrandContext, samples: string): Promis
 
 export async function planFunnel(brand: BrandContext, goal: string, pieces: number): Promise<FunnelPlan> {
   if (!aiEnabled()) return mockPlan(brand, goal, pieces);
-  const res = await client().beta.messages.parse({
-    model: MODEL,
-    max_tokens: 16000,
-    betas: BETAS,
-    fallbacks: "default",
-    output_config: { effort: "high", format: betaZodOutputFormat(FunnelPlanSchema) },
-    system: "You are a B2B and B2C content strategist who designs content funnels that turn interest into customers.",
-    messages: [{
-      role: "user",
-      content: `${brandBlock(brand)}
+  const planSystem = "You are a B2B and B2C content strategist who designs content funnels that turn interest into customers.";
+  const planPrompt = `${brandBlock(brand)}
 
 Design a connected content funnel with exactly ${pieces} pieces whose business goal is: "${goal}".
 
@@ -166,8 +173,16 @@ Rules:
 - Every piece's cta names the next piece in the funnel (by its title) or the offer itself, so the funnel is one connected path.
 - Keywords must be specific long-tail phrases, not single generic words.
 - Order items in the sequence a reader would move through them.
-Allowed formats: ${FORMAT_IDS.join(", ")}.`,
-    }],
+Allowed formats: ${FORMAT_IDS.join(", ")}.`;
+  if (aiProvider() === "gemini") return geminiJson(FunnelPlanSchema, planPrompt, planSystem);
+  const res = await client().beta.messages.parse({
+    model: MODEL,
+    max_tokens: 16000,
+    betas: BETAS,
+    fallbacks: "default",
+    output_config: { effort: "high", format: betaZodOutputFormat(FunnelPlanSchema) },
+    system: planSystem,
+    messages: [{ role: "user", content: planPrompt }],
   });
   if (res.stop_reason === "refusal" || !res.parsed_output) throw new Error("Could not plan this funnel.");
   return res.parsed_output;
@@ -223,7 +238,7 @@ function mockVoice(b: BrandContext): VoiceProfile {
     bannedWords: ["synergy", "leverage", "best-in-class", "disrupt"],
     dos: ["Lead with the reader's problem", "Use concrete examples", "End with one clear next step"],
     donts: ["Hype", "Jargon", "Long intros"],
-    sampleLines: ["(Demo mode) Add an ANTHROPIC_API_KEY to extract real lines from your samples."],
+    sampleLines: ["(Demo mode) Add a GEMINI_API_KEY (free) or ANTHROPIC_API_KEY to extract real lines from your samples."],
   };
 }
 
@@ -241,14 +256,14 @@ function mockPlan(b: BrandContext, goal: string, n: number): FunnelPlan {
   const priority = [0, 5, 4, 6, 1, 2, 3];
   const picked = n <= base.length ? priority.slice(0, n).sort((a, b) => a - b).map((i) => base[i]) : base;
   const items = Array.from({ length: n }, (_, i) => i < picked.length ? picked[i] : { ...base[i % base.length], title: `${base[i % base.length].title} (part ${Math.floor(i / base.length) + 1})` });
-  return { strategy: `(Demo mode) A ${n}-piece funnel for ${b.audience} that moves readers from problem awareness to ${goal}. Add an ANTHROPIC_API_KEY for a real AI-generated strategy.`, items };
+  return { strategy: `(Demo mode) A ${n}-piece funnel for ${b.audience} that moves readers from problem awareness to ${goal}. Add a GEMINI_API_KEY (free) or ANTHROPIC_API_KEY for a real AI-generated strategy.`, items };
 }
 
 async function mockDraft(b: BrandContext, brief: Brief) {
   await new Promise((r) => setTimeout(r, 2000)); // simulate AI latency so the background-job UI is exercised
   return `# ${brief.title}
 
-> **Demo mode.** Add an \`ANTHROPIC_API_KEY\` to \`.env\` to generate real drafts in ${b.name}'s voice.
+> **Demo mode.** Add a \`GEMINI_API_KEY\` (free) or \`ANTHROPIC_API_KEY\` to \`.env\` to generate real drafts in ${b.name}'s voice.
 
 ## The problem
 

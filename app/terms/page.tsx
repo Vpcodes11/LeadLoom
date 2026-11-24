@@ -23,7 +23,7 @@ export default function Terms() {
       </ul>
 
       <h2>4. Your content</h2>
-      <p>You own the brand information, writing samples and content you put into Leadloom and the content it generates for you (&quot;Your Content&quot;). You give us a limited licence to store, process and display Your Content only to provide the Service, including sending it to our AI provider to generate drafts. We do not use Your Content to train AI models.</p>
+      <p>You own the brand information, writing samples and content you put into Leadloom and the content it generates for you (&quot;Your Content&quot;). You give us a limited licence to store, process and display Your Content only to provide the Service, including sending it to our AI provider to generate drafts. We do not use Your Content to train AI models ourselves; how our AI provider may use it is explained in the <Link href="/privacy" className="underline">Privacy Policy</Link>.</p>
 
       <h2>5. AI-generated content</h2>
       <p>Drafts are produced by AI and can contain mistakes. Leadloom flags likely problems (such as unsourced statistics and placeholders) but you are responsible for reviewing, fact-checking and approving content before you publish it, and for making sure it complies with laws and the rights of others.</p>

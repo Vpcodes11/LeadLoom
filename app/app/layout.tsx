@@ -35,7 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </div>
         <div className="hidden md:block mt-auto space-y-3 text-xs text-slate-500">
-          {!aiEnabled() && <p className="rounded-md bg-amber-50 p-2 text-amber-800">Demo mode: set ANTHROPIC_API_KEY for real AI output.</p>}
+          {!aiEnabled() && <p className="rounded-md bg-amber-50 p-2 text-amber-800">Demo mode: set GEMINI_API_KEY (free) or ANTHROPIC_API_KEY for real AI output.</p>}
           <div>
             <div className="flex justify-between"><span>{plan.name} plan</span><span>{used}/{plan.piecesPerMonth} pieces</span></div>
             <div className="mt-1 h-1.5 rounded-full bg-slate-100"><div className="h-1.5 rounded-full bg-brand-500" style={{ width: `${Math.min(100, (used / plan.piecesPerMonth) * 100)}%` }} /></div>

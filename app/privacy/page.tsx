@@ -16,12 +16,16 @@ export default function Privacy() {
       </ul>
 
       <h2>How we use it</h2>
-      <p>To provide the Service (generating and storing content, client reviews, notifications), to bill you, to keep the Service secure, and to contact you about your account. We do not sell personal data and do not use your content to train AI models.</p>
+      <p>To provide the Service (generating and storing content, client reviews, notifications), to bill you, to keep the Service secure, and to contact you about your account. We do not sell personal data and we do not use your content to train AI models ourselves.</p>
+
+      <h2>AI processing</h2>
+      <p>To write voice profiles, funnel plans and drafts, we send the relevant brand details, briefs and drafts to our AI provider. We currently use Google&apos;s Gemini API. On Google&apos;s free tier, Google may use the prompts and responses it receives to improve its products, and human reviewers at Google may read them. Do not put confidential information, passwords or sensitive personal data into briefs, writing samples or proof points. We may also use Anthropic&apos;s Claude API; Anthropic does not use API data to train its models by default.</p>
 
       <h2>Service providers</h2>
       <p>We use these providers to run Leadloom, each only for the purpose listed:</p>
       <ul>
-        <li><strong>Anthropic</strong> (AI model that writes drafts, voice profiles and funnel plans)</li>
+        <li><strong>Google</strong> (Gemini API: AI model that writes drafts, voice profiles and funnel plans)</li>
+        <li><strong>Anthropic</strong> (Claude API, an alternative AI model for the same purposes)</li>
         <li><strong>Neon</strong> (database hosting)</li>
         <li><strong>Vercel</strong> (application hosting)</li>
         <li><strong>Dodo Payments</strong> (payments, invoicing and sales tax, as merchant of record)</li>

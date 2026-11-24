@@ -14,7 +14,7 @@ Plan and produce blogs, landing pages, email sequences, case studies and social 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Postgres](https://img.shields.io/badge/Neon-Postgres-00E599?logo=postgresql&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma)
-![Claude](https://img.shields.io/badge/AI-Claude-D97757)
+![Gemini](https://img.shields.io/badge/AI-Gemini_%2F_Claude-4285F4)
 ![Dodo Payments](https://img.shields.io/badge/Billing-Dodo_Payments-C6F432)
 ![Tailwind](https://img.shields.io/badge/Tailwind-v4-06B6D4?logo=tailwindcss&logoColor=white)
 
@@ -211,7 +211,7 @@ npm run dev
 
 Open http://localhost:3000 and log in with **`demo@leadloom.dev` / `demo1234`**.
 
-> **Demo mode:** without `ANTHROPIC_API_KEY`, the app runs with placeholder AI output, so you can click through every flow at no cost. Add a key to generate real voice profiles, funnel plans and drafts.
+> **Demo mode:** without `GEMINI_API_KEY` or `ANTHROPIC_API_KEY`, the app runs with placeholder AI output, so you can click through every flow at no cost. Add a key to generate real voice profiles, funnel plans and drafts.
 
 ### Scripts
 
@@ -234,7 +234,10 @@ Open http://localhost:3000 and log in with **`demo@leadloom.dev` / `demo1234`**.
 | `AUTH_SECRET` | ✅ | Signs session cookies. `openssl rand -hex 32` |
 | `APP_URL` | ✅ | Public URL, used for checkout redirects and client review links. |
 | `CRON_SECRET` | ✅ | Protects `/api/jobs/run`, the stuck-job recovery endpoint. `openssl rand -hex 32` |
-| `ANTHROPIC_API_KEY` | For real AI | Claude API key. Leave empty for demo mode. |
+| `GEMINI_API_KEY` | For real AI (free) | Google Gemini API key from [AI Studio](https://aistudio.google.com/apikey). Free tier, rate-limited. Takes priority when set. |
+| `GEMINI_MODEL` | Optional | Defaults to `gemini-3.8-flash`. |
+| `ANTHROPIC_API_KEY` | For real AI (paid) | Claude API key. Used when no Gemini key is set, or with `AI_PROVIDER=claude`. |
+| `AI_PROVIDER` | Optional | `gemini` or `claude` to force a provider when both keys are set. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | For Google sign-in | OAuth web client from Google Cloud Console. Redirect URI: `{APP_URL}/api/auth/google/callback`. The button is hidden until both are set. |
 | `RESEND_API_KEY` | For email | Resend API key. Without it, invites show a copyable link and emails are logged. |
 | `EMAIL_FROM` | For email | Sender, e.g. `Leadloom <noreply@yourdomain.com>` (domain verified in Resend). |
