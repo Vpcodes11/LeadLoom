@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Instrument_Serif, Inter, JetBrains_Mono } from "next/font/google";
 import { Nav } from "@/components/landing/nav";
-import { Photo, PHOTOS } from "@/components/landing/photo";
+import { BgVideo } from "@/components/landing/bg-video";
 import { Steps } from "@/components/landing/steps";
 import { QaMeter } from "@/components/landing/qa-meter";
 import { Reveal } from "@/components/landing/reveal";
@@ -19,18 +19,18 @@ export default function Home() {
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-white focus:px-4 focus:py-2">Skip to content</a>
       <Nav />
 
-      {/* Hero: real golden-hour photograph, darkened at the top for the headline. */}
-      <section className="relative mx-3 overflow-hidden rounded-[32px] bg-[#4a4a32] text-white sm:mx-5">
-        <Photo src={PHOTOS.meadow} position="50% 30%" priority overlay="linear-gradient(180deg, rgba(14,18,24,.52) 0%, rgba(14,18,24,.3) 38%, rgba(14,18,24,.06) 62%, rgba(10,14,8,.5) 100%)" />
-        <div className="relative mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center px-6 pb-10 pt-36 text-center sm:pt-44">
+      {/* Hero: the Leadloom film. Golden threads from the whole sky gather into one desk lamp. */}
+      <section className="relative mx-3 overflow-hidden rounded-[32px] bg-[#4f6a95] text-white sm:mx-5">
+        <BgVideo name="hero" position="50% 70%" overlay="linear-gradient(180deg, rgba(10,16,30,.45) 0%, rgba(10,16,30,.22) 40%, rgba(10,16,30,.05) 62%, rgba(8,12,6,.45) 100%)" />
+        <div className="relative mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center px-6 pb-10 pt-24 text-center sm:pt-[13vh]">
           <p className="rise glass mono rounded-full px-3.5 py-1.5 text-[11px] uppercase" style={{ animationDelay: "80ms" }}>For marketing &amp; SEO agencies</p>
-          <h1 className="rise serif mt-7 text-[54px] leading-[0.98] drop-shadow-[0_2px_24px_rgba(20,30,60,.35)] sm:text-[84px] lg:text-[104px]" style={{ animationDelay: "180ms" }}>
+          <h1 className="rise serif mt-5 text-[50px] leading-[0.98] drop-shadow-[0_2px_24px_rgba(20,30,60,.35)] sm:text-[76px] lg:text-[92px]" style={{ animationDelay: "180ms" }}>
             Content that <em>leads</em> somewhere.
           </h1>
-          <p className="rise mt-6 max-w-xl text-[16px] leading-7 text-white/90 sm:text-[17px]" style={{ animationDelay: "320ms" }}>
+          <p className="rise mt-5 max-w-xl text-[16px] leading-7 text-white/90 sm:text-[17px]" style={{ animationDelay: "320ms" }}>
             Leadloom learns each client’s voice, plans content funnels that end in a sale, writes and quality-checks every draft, and gets client sign-off with one link.
           </p>
-          <div className="rise mt-9 flex flex-col items-center gap-3 sm:flex-row" style={{ animationDelay: "460ms" }}>
+          <div className="rise mt-7 flex flex-col items-center gap-3 sm:flex-row" style={{ animationDelay: "460ms" }}>
             <Link href="/signup" className="btn-light rounded-full px-6 py-3 text-sm font-medium">Start free: 5 pieces, no card</Link>
             <a href="#how" className="glass rounded-full px-6 py-3 text-sm font-medium">See how it works</a>
           </div>
