@@ -15,7 +15,10 @@ import { layout, sendEmail } from "./email";
 export type ActionState = { error?: string; ok?: string } | undefined;
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
-const errMsg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong");
+const errMsg = (e: unknown) => {
+  console.error("[action] failed:", e instanceof Error ? e.message : e);
+  return e instanceof Error ? e.message : "Something went wrong";
+};
 
 // ---------- Auth ----------
 

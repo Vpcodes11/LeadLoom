@@ -24,25 +24,40 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function interact(body: Record<string, unknown>): Promise<string> {
   // Free-tier rate limits return 429; overloaded models return 503. Back off and retry.
-  const delays = [0, 8_000, 20_000, 45_000];
+  const delays = [0, 5_000, 15_000];
   let lastError = "";
-  for (const delay of delays) {
+  for (const [attempt, delay] of delays.entries()) {
     if (delay) await sleep(delay);
-    const res = await fetch(ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": String(process.env.GEMINI_API_KEY),
-        "Api-Revision": API_REVISION,
-      },
-      body: JSON.stringify({ model: model(), store: false, ...body }),
-      cache: "no-store",
-    });
-    if (res.status === 429 || res.status >= 500) {
-      lastError = `${res.status} ${(await res.text().catch(() => "")).slice(0, 300)}`;
+    const started = Date.now();
+    let res: Response;
+    try {
+      res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": String(process.env.GEMINI_API_KEY),
+          "Api-Revision": API_REVISION,
+        },
+        body: JSON.stringify({ model: model(), store: false, ...body }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(90_000),
+      });
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+      console.error(`[gemini] attempt ${attempt + 1} network/timeout after ${Date.now() - started}ms: ${lastError}`);
       continue;
     }
-    if (!res.ok) throw new Error(`Gemini request failed: ${res.status} ${(await res.text().catch(() => "")).slice(0, 500)}`);
+    console.log(`[gemini] attempt ${attempt + 1} model=${model()} status=${res.status} in ${Date.now() - started}ms`);
+    if (res.status === 429 || res.status >= 500) {
+      lastError = `${res.status} ${(await res.text().catch(() => "")).slice(0, 300)}`;
+      console.error(`[gemini] retryable error: ${lastError}`);
+      continue;
+    }
+    if (!res.ok) {
+      const detail = (await res.text().catch(() => "")).slice(0, 500);
+      console.error(`[gemini] request failed: ${res.status} ${detail}`);
+      throw new Error(`Gemini request failed: ${res.status} ${detail}`);
+    }
     const data = (await res.json()) as Interaction;
     const text = (data.steps ?? [])
       .filter((s) => s.type === "model_output")
