@@ -9,7 +9,7 @@ import { clientIp, rateLimit } from "./ratelimit";
 import { hashToken, newToken } from "./tokens";
 import { emailEnabled, layout, sendEmail } from "./email";
 import { planOf } from "./plans";
-import { stripe, stripeEnabled } from "./stripe";
+import { billingEnabled, cancelSubscription } from "./billing";
 
 export type FormState = { error?: string; ok?: string; link?: string } | undefined;
 
@@ -130,8 +130,8 @@ export async function deleteAccount(_: FormState, f: FormData): Promise<FormStat
     const { workspace } = await requireOwner();
     workspaceName = workspace.name;
     if (str(f, "confirm") !== workspace.name) return { error: `Type "${workspace.name}" exactly to confirm.` };
-    if (stripeEnabled() && workspace.stripeSubscriptionId) {
-      try { await stripe().subscriptions.cancel(workspace.stripeSubscriptionId); } catch (e) { console.error("stripe cancel failed", e); }
+    if (billingEnabled() && workspace.billingSubscriptionId) {
+      try { await cancelSubscription(workspace.billingSubscriptionId); } catch (e) { console.error("subscription cancel failed", e); }
     }
     const memberIds = (await db.membership.findMany({ where: { workspaceId: workspace.id }, select: { userId: true } })).map((m) => m.userId);
     await db.$transaction([

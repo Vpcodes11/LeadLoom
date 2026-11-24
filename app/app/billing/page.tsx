@@ -1,10 +1,10 @@
 import { requireUser } from "@/lib/auth";
 import { PLANS, planOf, type PlanId } from "@/lib/plans";
 import { piecesUsed } from "@/lib/usage";
-import { stripeEnabled } from "@/lib/stripe";
+import { billingEnabled } from "@/lib/billing";
 import { Button, Card, PageHeader } from "@/components/ui";
 
-export default async function Billing({ searchParams }: { searchParams: Promise<{ success?: string; error?: string }> }) {
+export default async function Billing({ searchParams }: { searchParams: Promise<{ success?: string; changed?: string; error?: string }> }) {
   const sp = await searchParams;
   const { workspace, role } = await requireUser();
   const current = planOf(workspace.plan);
@@ -13,10 +13,12 @@ export default async function Billing({ searchParams }: { searchParams: Promise<
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader title="Billing" sub={workspace.plan === "trial" || !(workspace.plan in PLANS) ? `Free trial: ${used} of ${current.piecesPerMonth} trial pieces used. Choose a plan to keep going.` : `You're on ${current.name}: ${used}/${current.piecesPerMonth} pieces used this month, up to ${current.brands} brand(s).`}
-        actions={workspace.stripeCustomerId && <form action="/api/stripe/portal" method="post"><Button variant="secondary">Manage subscription</Button></form>} />
+        actions={role === "owner" && workspace.billingCustomerId && <form action="/api/billing/portal" method="post"><Button variant="secondary">Manage subscription</Button></form>} />
       {sp.success && <p className="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">Thanks! Your plan will update in a few seconds.</p>}
+      {sp.changed && <p className="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">Plan change requested. Your new limits apply as soon as the payment goes through.</p>}
       {sp.error === "owner" && <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Only the workspace owner can change the plan.</p>}
-      {role === "owner" && (sp.error === "stripe" || !stripeEnabled()) && <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Stripe isn&apos;t configured yet. Set STRIPE_SECRET_KEY and STRIPE_PRICE_* in .env to enable checkout.</p>}
+      {role === "owner" && (sp.error === "billing" || !billingEnabled()) && <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Billing isn&apos;t configured yet. Set DODO_PAYMENTS_API_KEY and DODO_PRODUCT_* in .env to enable checkout.</p>}
+      {(sp.error === "checkout" || sp.error === "portal") && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">We couldn&apos;t reach the payment provider. Please try again in a minute.</p>}
       <div className="grid gap-5 md:grid-cols-3">
         {ids.map((id) => {
           const p = PLANS[id];
@@ -31,9 +33,9 @@ export default async function Billing({ searchParams }: { searchParams: Promise<
                 <li>{p.seats} team seat{p.seats === 1 ? "" : "s"}</li>
                 <li>{p.whiteLabel ? "White-label client portal" : "Client review links"}</li>
               </ul>
-              <form action="/api/stripe/checkout" method="post" className="mt-5">
+              <form action="/api/billing/checkout" method="post" className="mt-5">
                 <input type="hidden" name="plan" value={id} />
-                <Button className="w-full" disabled={isCurrent} variant={isCurrent ? "secondary" : "primary"}>{isCurrent ? "Current plan" : `Choose ${p.name}`}</Button>
+                <Button className="w-full" disabled={isCurrent} variant={isCurrent ? "secondary" : "primary"}>{isCurrent ? "Current plan" : workspace.billingSubscriptionId && workspace.plan !== "trial" ? `Switch to ${p.name}` : `Choose ${p.name}`}</Button>
               </form>
             </Card>
           );

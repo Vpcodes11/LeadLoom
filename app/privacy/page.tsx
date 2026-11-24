@@ -11,7 +11,7 @@ export default function Privacy() {
       <ul>
         <li><strong>Account data:</strong> name, email address and a hashed password (we never store your password in readable form). If you sign in with Google, we receive your name, email address and Google account ID, and nothing else.</li>
         <li><strong>Workspace content:</strong> brand details, writing samples, briefs, drafts, comments and review feedback you or your clients add.</li>
-        <li><strong>Billing data:</strong> handled by Stripe. We store your Stripe customer and subscription IDs, never your card details.</li>
+        <li><strong>Billing data:</strong> handled by Dodo Payments, our reseller and merchant of record. We store your Dodo Payments customer and subscription IDs, never your card details.</li>
         <li><strong>Usage and security data:</strong> counts of AI actions for plan limits, and IP addresses briefly for rate limiting and abuse prevention.</li>
       </ul>
 
@@ -24,7 +24,7 @@ export default function Privacy() {
         <li><strong>Anthropic</strong> (AI model that writes drafts, voice profiles and funnel plans)</li>
         <li><strong>Neon</strong> (database hosting)</li>
         <li><strong>Vercel</strong> (application hosting)</li>
-        <li><strong>Stripe</strong> (payments)</li>
+        <li><strong>Dodo Payments</strong> (payments, invoicing and sales tax, as merchant of record)</li>
         <li><strong>Google</strong> (optional sign-in)</li>
         <li><strong>Resend</strong> (transactional email, such as password resets and review notifications)</li>
       </ul>

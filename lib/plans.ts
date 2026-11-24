@@ -8,12 +8,12 @@ export const PLANS: Record<PlanId, {
   seats: number;
   whiteLabel: boolean;
   blurb: string;
-  priceEnv?: string;
+  productEnv?: string;
 }> = {
   trial: { name: "Free trial", price: 0, brands: 1, piecesPerMonth: 5, seats: 2, whiteLabel: false, blurb: "5 pieces to try it, no card needed" },
-  starter: { name: "Starter", price: 49, brands: 1, piecesPerMonth: 12, seats: 2, whiteLabel: false, blurb: "For one business", priceEnv: "STRIPE_PRICE_STARTER" },
-  growth: { name: "Growth", price: 149, brands: 5, piecesPerMonth: 40, seats: 5, whiteLabel: false, blurb: "For growing teams", priceEnv: "STRIPE_PRICE_GROWTH" },
-  agency: { name: "Agency", price: 399, brands: 50, piecesPerMonth: 150, seats: 15, whiteLabel: true, blurb: "Client portal + white-label", priceEnv: "STRIPE_PRICE_AGENCY" },
+  starter: { name: "Starter", price: 49, brands: 1, piecesPerMonth: 12, seats: 2, whiteLabel: false, blurb: "For one business", productEnv: "DODO_PRODUCT_STARTER" },
+  growth: { name: "Growth", price: 149, brands: 5, piecesPerMonth: 40, seats: 5, whiteLabel: false, blurb: "For growing teams", productEnv: "DODO_PRODUCT_GROWTH" },
+  agency: { name: "Agency", price: 399, brands: 50, piecesPerMonth: 150, seats: 15, whiteLabel: true, blurb: "Client portal + white-label", productEnv: "DODO_PRODUCT_AGENCY" },
 };
 
 export function planOf(id: string) {

@@ -15,7 +15,7 @@ Plan and produce blogs, landing pages, email sequences, case studies and social 
 ![Postgres](https://img.shields.io/badge/Neon-Postgres-00E599?logo=postgresql&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma)
 ![Claude](https://img.shields.io/badge/AI-Claude-D97757)
-![Stripe](https://img.shields.io/badge/Billing-Stripe-635BFF?logo=stripe&logoColor=white)
+![Dodo Payments](https://img.shields.io/badge/Billing-Dodo_Payments-C6F432)
 ![Tailwind](https://img.shields.io/badge/Tailwind-v4-06B6D4?logo=tailwindcss&logoColor=white)
 
 </div>
@@ -92,7 +92,7 @@ Sign up and log in with email or **Continue with Google** (existing accounts are
 Email alerts when a client approves or requests changes, plus invite and password-reset emails (via Resend).
 
 ### 💳 Plans and billing
-A one-time free trial, then Stripe Checkout, the Stripe customer portal and webhooks, with monthly limits per plan.
+A one-time free trial, then Dodo Payments checkout, plan switching, the Dodo customer portal and webhooks, with monthly limits per plan. Dodo Payments is the merchant of record, so it handles global sales tax and VAT and pays out to you (works for founders in India and other countries where Stripe is limited).
 
 ---
 
@@ -165,7 +165,7 @@ Every piece, every brand, every stage.
 <table>
   <tr>
     <td width="30%" valign="top"><img src="docs/screenshots/client-portal-mobile.png" alt="Client review portal on mobile" width="100%" /><br/><sub>Client review on a phone. No account needed.</sub></td>
-    <td width="70%" valign="top"><img src="docs/screenshots/billing.png" alt="Billing and plans" width="100%" /><br/><sub>Plans and Stripe billing.</sub></td>
+    <td width="70%" valign="top"><img src="docs/screenshots/billing.png" alt="Billing and plans" width="100%" /><br/><sub>Plans and billing.</sub></td>
   </tr>
 </table>
 
@@ -232,16 +232,17 @@ Open http://localhost:3000 and log in with **`demo@leadloom.dev` / `demo1234`**.
 | `DATABASE_URL` | ✅ | **Pooled** Postgres URL (Neon `-pooler` host). Used by the app. |
 | `DATABASE_URL_UNPOOLED` | ✅ | **Direct** Postgres URL. Used by Prisma Migrate. |
 | `AUTH_SECRET` | ✅ | Signs session cookies. `openssl rand -hex 32` |
-| `APP_URL` | ✅ | Public URL, used for Stripe redirects and client review links. |
+| `APP_URL` | ✅ | Public URL, used for checkout redirects and client review links. |
 | `CRON_SECRET` | ✅ | Protects `/api/jobs/run`, the stuck-job recovery endpoint. `openssl rand -hex 32` |
 | `ANTHROPIC_API_KEY` | For real AI | Claude API key. Leave empty for demo mode. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | For Google sign-in | OAuth web client from Google Cloud Console. Redirect URI: `{APP_URL}/api/auth/google/callback`. The button is hidden until both are set. |
 | `RESEND_API_KEY` | For email | Resend API key. Without it, invites show a copyable link and emails are logged. |
 | `EMAIL_FROM` | For email | Sender, e.g. `Leadloom <noreply@yourdomain.com>` (domain verified in Resend). |
 | `SUPPORT_EMAIL` | Recommended | Contact address shown on the Terms and Privacy pages. |
-| `STRIPE_SECRET_KEY` | For billing | Stripe secret key. |
-| `STRIPE_WEBHOOK_SECRET` | For billing | Signing secret of the webhook below. |
-| `STRIPE_PRICE_STARTER` / `_GROWTH` / `_AGENCY` | For billing | Stripe recurring price IDs. |
+| `DODO_PAYMENTS_API_KEY` | For billing | Dodo Payments API key (Developer → API Keys), created in the same mode as below. |
+| `DODO_PAYMENTS_WEBHOOK_KEY` | For billing | Signing secret of the webhook below. |
+| `DODO_PAYMENTS_ENVIRONMENT` | For billing | `test_mode` or `live_mode`. |
+| `DODO_PRODUCT_STARTER` / `_GROWTH` / `_AGENCY` | For billing | Product IDs (`pdt_...`) of the three monthly subscription products. |
 
 ---
 
@@ -250,7 +251,7 @@ Open http://localhost:3000 and log in with **`demo@leadloom.dev` / `demo1234`**.
 1. **Database (Neon).** The project is linked to Neon through [`neon.ts`](neon.ts). Run `neon deploy` to provision it and pull `DATABASE_URL` and `DATABASE_URL_UNPOOLED`.
 2. **App (Vercel).** Import this repository at [vercel.com/new](https://vercel.com/new) and add the environment variables above. Keep **Fluid compute** enabled.
 3. **Deploy.** The build runs `prisma migrate deploy`, so the schema is applied automatically.
-4. **Stripe.** Create three monthly prices and add a webhook to `https://YOUR_DOMAIN/api/stripe/webhook` for `checkout.session.completed`, `customer.subscription.updated` and `customer.subscription.deleted`.
+4. **Dodo Payments.** Create three monthly subscription products (Starter $49, Growth $149, Agency $399) and copy their product IDs. Add a webhook endpoint `https://YOUR_DOMAIN/api/billing/webhook` subscribed to all `subscription.*` events and copy its signing secret. After checkout, Dodo returns the customer to `/api/billing/return`, which links the subscription to the workspace. Test the whole flow in test mode first, then switch `DODO_PAYMENTS_ENVIRONMENT` to `live_mode` with live keys and live product IDs.
 5. **Health check.** `GET /api/health` checks the database and reports which integrations (AI, billing, email) are configured. Point an uptime monitor at it.
 6. **Cron.** [`vercel.json`](vercel.json) calls `/api/jobs/run` once a day (the Vercel Hobby limit) to retry stuck AI jobs. On Vercel Pro, change the schedule to `*/5 * * * *` for faster recovery.
 
@@ -268,12 +269,12 @@ flowchart TB
       SA[Server actions<br/>lib/actions.ts]
       Q[Background jobs<br/>lib/jobs.ts via after]
       QA[QA engine<br/>lib/qa.ts]
-      API[Route handlers<br/>Stripe · export · cron]
+      API[Route handlers<br/>billing · export · cron]
     end
     subgraph Services
       Claude[Claude API<br/>voice · plan · draft · revise]
       Neon[(Neon Postgres<br/>pooled via pg + Prisma)]
-      Stripe[Stripe]
+      Dodo[Dodo Payments]
     end
     UI --> SA
     Portal --> SA
@@ -282,7 +283,7 @@ flowchart TB
     Q --> QA
     SA --> Neon
     Q --> Neon
-    API --> Stripe
+    API --> Dodo
     API --> Neon
 ```
 
@@ -304,7 +305,7 @@ flowchart TB
 | Database | Neon Postgres, Prisma 6 with the `pg` driver adapter |
 | AI | Anthropic Claude via `@anthropic-ai/sdk`, structured outputs, server-side refusal fallback |
 | Auth | Email and password (bcrypt) and Google sign-in (OAuth 2.0 + PKCE), signed JWT session cookie (`jose`) |
-| Billing | Stripe Checkout, customer portal, webhooks |
+| Billing | Dodo Payments (merchant of record): hosted checkout, plan changes, customer portal, Standard Webhooks signatures |
 | Hosting | Vercel (Fluid compute, Cron) |
 
 ### Project structure
@@ -324,7 +325,7 @@ app/
   api/
     export/[id]/            Markdown download
     jobs/run/               Cron: recover stuck AI jobs
-    stripe/                 Checkout, portal, webhook
+    billing/                Dodo Payments checkout, return, portal, webhook
 components/                 UI building blocks
 lib/
   ai.ts                     Claude prompts and calls (voice, plan, draft, revise)

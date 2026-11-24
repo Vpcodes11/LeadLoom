@@ -13,8 +13,8 @@ model Workspace {
   name               String
   plan               String    @default("trial") // trial | starter | growth | agency
   subscriptionStatus String    @default("trialing")
-  stripeCustomerId   String?   @unique
-  stripeSubscriptionId String?
+  billingCustomerId  String?   // Dodo Payments customer ID
+  billingSubscriptionId String? // Dodo Payments subscription ID
   agencyName         String?   // white-label name shown on client review portal
   createdAt          DateTime  @default(now())
   members            Membership[]
