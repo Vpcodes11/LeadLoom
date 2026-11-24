@@ -1,172 +1,87 @@
-import Link from "next/link";
 import Image from "next/image";
-import { Logo } from "@/components/logo";
-import { LinkButton, Card } from "@/components/ui";
-import { PLANS, type PlanId } from "@/lib/plans";
+import Link from "next/link";
+import { Instrument_Serif, Inter, JetBrains_Mono } from "next/font/google";
+import { Nav } from "@/components/landing/nav";
+import { Scene } from "@/components/landing/scene";
+import { Steps } from "@/components/landing/steps";
+import { QaMeter } from "@/components/landing/qa-meter";
+import { Reveal } from "@/components/landing/reveal";
+import { Closing, Compare, Eyebrow, Faq, Footer, Pricing, Portal, Problem, RetainerMath } from "@/components/landing/sections";
+import "./landing.css";
 
-const pains = [
-  { t: "Freelancers miss deadlines", d: "And you find out the day the client expects it." },
-  { t: "Drafts don't sound like the client", d: "So you rewrite them yourself at 11pm." },
-  { t: "Feedback lives everywhere", d: "Email, WhatsApp, Doc comments. Which version did they approve?" },
-  { t: "Content is your worst margin", d: "After writer costs and your time, there's little left." },
-];
-
-const features = [
-  { n: "1", t: "Learns each client's voice once", d: "Paste a few things they've written. Leadloom builds a voice profile: their tone, the words they use and the words they'd never say. Every draft is written to it." },
-  { n: "2", t: "Plans content that sells", d: "Give it the client's goal, like \"book 30 consultations this quarter\". It maps a connected funnel of blogs, case studies, a landing page and emails, each pointing to the next." },
-  { n: "3", t: "Checks every draft before you do", d: "A quality score on every piece. It flags AI-sounding phrases, banned words, unsourced statistics and missing calls to action. It never invents results: missing numbers become [ADD METRIC]." },
-  { n: "4", t: "Clients approve with one link", d: "No logins, no email threads. Clients read on their phone and tap Approve or Request changes. On the Agency plan, the page shows only your agency's name." },
-  { n: "5", t: "One board for every client", d: "Every piece for every client: drafting, with the client, needs changes, approved, delivered." },
-];
-
-const faqs = [
-  { q: "Is this just ChatGPT with a nicer screen?", a: "No. ChatGPT gives you one-off text. Leadloom keeps a voice profile and fact sheet per client, plans connected funnels, scores every draft, and handles client approval and delivery. It's the agency workflow, not a chat box." },
-  { q: "Will my clients know I use AI?", a: "Only if you tell them. On the Agency plan the review portal is white-label, and you approve every piece before it goes out." },
-  { q: "Does it make up facts?", a: "It is instructed to use only the proof points you give it for each client. Where a number would help but you haven't provided one, it writes a placeholder like [ADD METRIC] and the quality check flags it until it's filled in." },
-  { q: "Do I still need to edit?", a: "Yes, and that's the point. Leadloom does the research-and-first-draft work that eats your week. You keep the judgment your clients pay you for." },
-  { q: "What happens after the free trial?", a: "You keep everything you made. To create more, pick a plan. No contracts; cancel anytime from the Billing page." },
-];
+const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-ll-serif", display: "swap" });
+const sans = Inter({ subsets: ["latin"], variable: "--font-ll-sans", display: "swap" });
+const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400"], variable: "--font-ll-mono", display: "swap" });
 
 export default function Home() {
-  const plans = (["starter", "growth", "agency"] as PlanId[]).map((id) => ({ id, ...PLANS[id] }));
-  const agency = PLANS.agency;
-  const perPiece = (agency.price / agency.piecesPerMonth).toFixed(2);
   return (
-    <div className="min-h-screen bg-white">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-5">
-        <Logo />
-        <nav className="flex items-center gap-1 sm:gap-2">
-          <LinkButton href="#pricing" variant="ghost" className="hidden sm:inline-flex">Pricing</LinkButton>
-          <LinkButton href="/login" variant="ghost">Log in</LinkButton>
-          <LinkButton href="/signup">Start free</LinkButton>
-        </nav>
-      </header>
+    <div className={`ll ${serif.variable} ${sans.variable} ${mono.variable} min-h-screen pt-3 sm:pt-5`}>
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-white focus:px-4 focus:py-2">Skip to content</a>
+      <Nav />
 
-      {/* Hero */}
-      <section className="mx-auto max-w-4xl px-4 sm:px-6 pt-12 sm:pt-16 pb-12 text-center">
-        <p className="mb-4 inline-block rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">For marketing and SEO agencies</p>
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900">Sell content to every client without hiring a writing team</h1>
-        <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-600">
-          Leadloom learns each client&apos;s voice, plans content funnels that lead to sales, writes and quality-checks every draft,
-          and gets client approval with one link. You keep the judgment. It does the rest.
-        </p>
-        <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
-          <LinkButton href="/signup">Try it on one client, free</LinkButton>
-          <LinkButton href="#how" variant="secondary">See how it works</LinkButton>
-        </div>
-        <p className="mt-3 text-xs text-slate-500">5 free pieces · 2 seats · full client portal · no card needed</p>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-16">
-        <div className="overflow-hidden rounded-xl border border-slate-200 shadow-xl">
-          <Image src="/product/funnel.png" alt="A client's content funnel in Leadloom, from awareness to decision" width={2880} height={1800} priority className="h-auto w-full" />
-        </div>
-      </section>
-
-      {/* Problem */}
-      <section className="bg-slate-50 py-16">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <h2 className="text-center text-2xl sm:text-3xl font-bold">Clients keep asking for content. You keep saying yes.</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-slate-600">And every month it&apos;s the same problems.</p>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {pains.map((p) => (
-              <Card key={p.t}><h3 className="font-semibold">{p.t}</h3><p className="mt-2 text-sm text-slate-600">{p.d}</p></Card>
-            ))}
+      {/* Hero: a painted dusk meadow; golden threads gather from the whole sky into one lamp. */}
+      <section className="relative mx-3 overflow-hidden rounded-[32px] text-white sm:mx-5">
+        <Scene variant="dawn" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1b2a4a]/40 via-transparent via-55% to-[#14200f]/45" />
+        <div className="relative mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center px-6 pb-10 pt-36 text-center sm:pt-44">
+          <p className="rise glass mono rounded-full px-3.5 py-1.5 text-[11px] uppercase" style={{ animationDelay: "80ms" }}>For marketing &amp; SEO agencies</p>
+          <h1 className="rise serif mt-7 text-[54px] leading-[0.98] drop-shadow-[0_2px_24px_rgba(20,30,60,.35)] sm:text-[84px] lg:text-[104px]" style={{ animationDelay: "180ms" }}>
+            Content that <em>leads</em> somewhere.
+          </h1>
+          <p className="rise mt-6 max-w-xl text-[16px] leading-7 text-white/90 sm:text-[17px]" style={{ animationDelay: "320ms" }}>
+            Leadloom learns each client’s voice, plans content funnels that end in a sale, writes and quality-checks every draft, and gets client sign-off with one link.
+          </p>
+          <div className="rise mt-9 flex flex-col items-center gap-3 sm:flex-row" style={{ animationDelay: "460ms" }}>
+            <Link href="/signup" className="btn-light rounded-full px-6 py-3 text-sm font-medium">Start free: 5 pieces, no card</Link>
+            <a href="#how" className="glass rounded-full px-6 py-3 text-sm font-medium">See how it works</a>
           </div>
+          <p className="rise mono mt-auto pt-16 text-[11px] uppercase text-white/80" style={{ animationDelay: "620ms" }}>
+            Voice → Funnel → Draft → Quality check → Client approval
+          </p>
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how" className="mx-auto max-w-6xl px-4 sm:px-6 py-20">
-        <h2 className="text-center text-2xl sm:text-3xl font-bold">Your whole content workflow, in one place</h2>
-        <div className="mt-12 grid items-center gap-10 lg:grid-cols-2">
-          <div className="space-y-6">
-            {features.map((f) => (
-              <div key={f.n} className="flex gap-4">
-                <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-600 text-sm font-semibold text-white">{f.n}</div>
-                <div><h3 className="font-semibold">{f.t}</h3><p className="mt-1 text-sm text-slate-600">{f.d}</p></div>
-              </div>
-            ))}
-          </div>
-          <div className="space-y-4">
-            <div className="overflow-hidden rounded-xl border border-slate-200 shadow-lg">
-              <Image src="/product/content-editor.png" alt="Draft with a quality score of 90 and ten checks" width={2880} height={1800} className="h-auto w-full" />
+      <main id="main">
+        {/* Product reveal */}
+        <section className="mx-auto max-w-6xl px-5 pt-24 sm:px-8 sm:pt-32">
+          <Reveal className="mx-auto max-w-2xl text-center">
+            <Eyebrow>One workspace for every client</Eyebrow>
+            <h2 className="serif mt-4 text-[42px] leading-[1.04] sm:text-[58px]">Strategy, writing and sign-off. <em>Woven together.</em></h2>
+          </Reveal>
+          <Reveal className="frame mx-auto mt-14 max-w-5xl" delay={120}>
+            <div className="screen">
+              <Image src="/product/dashboard.png" alt="Leadloom dashboard showing every client's content and what needs attention" width={2880} height={1800} sizes="(min-width: 1024px) 1000px, 100vw" className="h-auto w-full" priority />
             </div>
-            <div className="flex items-start gap-4">
-              <div className="w-1/3 overflow-hidden rounded-xl border border-slate-200 shadow-lg">
-                <Image src="/product/client-portal-mobile.png" alt="Client reviewing content on a phone" width={1170} height={2532} className="h-auto w-full" />
-              </div>
-              <p className="w-2/3 pt-4 text-sm text-slate-600"><strong className="text-slate-900">Your client&apos;s view.</strong> A private link, no account. They read it on their phone, then approve or ask for changes. Their feedback lands on your board.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+          </Reveal>
+        </section>
 
-      {/* Math */}
-      <section className="bg-brand-600 py-16 text-white">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold">Two client retainers pay for it</h2>
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            <div><div className="text-4xl font-bold">${agency.price}</div><div className="mt-1 text-sm text-brand-100">a month on the Agency plan</div></div>
-            <div><div className="text-4xl font-bold">${perPiece}</div><div className="mt-1 text-sm text-brand-100">per piece across {agency.piecesPerMonth} pieces</div></div>
-            <div><div className="text-4xl font-bold">2 × $500</div><div className="mt-1 text-sm text-brand-100">client content retainers cover it, with profit left</div></div>
-          </div>
-          <p className="mx-auto mt-8 max-w-2xl text-sm text-brand-100">A content agency charges around $1,000 a month per client. Freelancers cost $100–300 per blog post plus your editing time. Add a third client and content becomes your best-margin service.</p>
-        </div>
-      </section>
+        <Problem />
 
-      {/* Pricing */}
-      <section id="pricing" className="mx-auto max-w-5xl px-4 sm:px-6 py-20">
-        <h2 className="text-center text-3xl font-bold">Simple monthly plans</h2>
-        <p className="text-center text-slate-600 mt-2">Start with 5 free pieces, no card needed. No contracts, cancel anytime.</p>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {plans.map((p) => (
-            <Card key={p.id} className={p.id === "agency" ? "ring-2 ring-brand-500" : ""}>
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{p.name}</h3>
-                {p.id === "agency" && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">For agencies</span>}
-              </div>
-              <p className="text-sm text-slate-500">{p.blurb}</p>
-              <p className="mt-4 text-3xl font-bold">${p.price}<span className="text-base font-normal text-slate-500">/mo</span></p>
-              <ul className="mt-4 space-y-1.5 text-sm text-slate-700">
-                <li>✓ {p.piecesPerMonth} pieces per month</li>
-                <li>✓ {p.brands} client brand{p.brands > 1 ? "s" : ""}</li>
-                <li>✓ {p.seats} team seat{p.seats > 1 ? "s" : ""}</li>
-                <li>✓ Voice profiles and funnel planner</li>
-                <li>✓ Quality checks on every draft</li>
-                <li>{p.whiteLabel ? "✓ White-label client review portal" : "✓ Client review links"}</li>
-              </ul>
-              <LinkButton href="/signup" className="mt-6 w-full" variant={p.id === "agency" ? "primary" : "secondary"}>Start free</LinkButton>
-            </Card>
-          ))}
-        </div>
-      </section>
+        <section id="how" className="mx-auto max-w-6xl scroll-mt-24 px-5 pb-16 sm:px-8">
+          <Reveal className="mb-6 lg:mb-0">
+            <Eyebrow>How it works</Eyebrow>
+            <h2 className="serif mt-4 max-w-2xl text-[42px] leading-[1.04] sm:text-[56px]">From a client’s goal to approved content.</h2>
+          </Reveal>
+          <Steps />
+        </section>
 
-      {/* FAQ */}
-      <section className="bg-slate-50 py-16">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6">
-          <h2 className="text-center text-2xl sm:text-3xl font-bold">Questions agencies ask</h2>
-          <div className="mt-8 space-y-3">
-            {faqs.map((f) => (
-              <details key={f.q} className="group rounded-xl border border-slate-200 bg-white p-4">
-                <summary className="cursor-pointer list-none font-medium flex items-center justify-between gap-4">{f.q}<span className="text-slate-400 group-open:rotate-45 transition">+</span></summary>
-                <p className="mt-3 text-sm text-slate-600">{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
+        <section id="quality" className="mx-auto grid max-w-6xl scroll-mt-24 items-center gap-14 px-5 py-28 sm:px-8 lg:grid-cols-2">
+          <Reveal>
+            <Eyebrow>Quality check</Eyebrow>
+            <h2 className="serif mt-4 text-[42px] leading-[1.04] sm:text-[56px]">Every draft is checked <em>before you read it.</em></h2>
+            <p className="mt-5 max-w-md text-[15px] leading-7 text-[var(--ink-2)]">Ten checks on every piece, scored 0–100: length, readability, AI-sounding phrases, the brand’s banned words, unsourced statistics, keyword placement, structure and a clear next step. The same draft always gets the same score.</p>
+          </Reveal>
+          <Reveal delay={120}><QaMeter /></Reveal>
+        </section>
 
-      {/* Final CTA */}
-      <section className="mx-auto max-w-3xl px-4 sm:px-6 py-20 text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold">Try it on your most demanding client this week</h2>
-        <p className="mt-3 text-slate-600">Build their funnel, send them the review link. If they approve faster than they do now, you&apos;ll know.</p>
-        <LinkButton href="/signup" className="mt-6">Start free: 5 pieces, no card</LinkButton>
-      </section>
-
-      <footer className="border-t border-slate-200 py-8 text-center text-sm text-slate-500">
-        © {new Date().getFullYear()} Leadloom · <Link href="/terms" className="hover:underline">Terms</Link> · <Link href="/privacy" className="hover:underline">Privacy</Link> · <Link href="/refund-policy" className="hover:underline">Refunds</Link>
-      </footer>
+        <Portal />
+        <Compare />
+        <RetainerMath />
+        <Pricing />
+        <Faq />
+        <Closing />
+      </main>
+      <Footer />
     </div>
   );
 }
