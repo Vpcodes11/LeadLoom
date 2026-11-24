@@ -9,8 +9,8 @@ export const ACTIVE = ["queued", "running"];
 const CONCURRENCY = 3;
 const STUCK_MS = 10 * 60_000;
 
-export function qaFor(item: { format: string; keyword: string | null; cta: string | null }, body: string, voiceJson: string | null) {
-  return JSON.stringify(runQa({ body, format: item.format, keyword: item.keyword, cta: item.cta, bannedWords: parseVoice(voiceJson)?.bannedWords }));
+export function qaFor(item: { format: string; keyword: string | null; cta: string | null }, body: string, brand: { voiceProfile: string | null; proofPoints: string | null }) {
+  return JSON.stringify(runQa({ body, format: item.format, keyword: item.keyword, cta: item.cta, bannedWords: parseVoice(brand.voiceProfile)?.bannedWords, proofPoints: brand.proofPoints }));
 }
 
 /** Queue AI jobs and start them once the response has been sent. Usage is recorded now (refunded if a job fails). */
@@ -55,7 +55,7 @@ export async function runJob(id: string) {
     const version = fresh.version + 1;
     const status = ["requested", "planned", "changes_requested"].includes(fresh.status) ? "draft" : fresh.status;
     await db.$transaction([
-      db.contentItem.update({ where: { id: item.id }, data: { body, version, status, qaReport: qaFor(item, body, item.brand.voiceProfile) } }),
+      db.contentItem.update({ where: { id: item.id }, data: { body, version, status, qaReport: qaFor(item, body, item.brand) } }),
       db.revision.create({ data: { itemId: item.id, version, body, reason } }),
       db.job.update({ where: { id }, data: { status: "done", finishedAt: new Date() } }),
     ]);

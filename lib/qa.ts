@@ -54,6 +54,8 @@ export function runQa(input: {
   keyword?: string | null;
   bannedWords?: string[];
   cta?: string | null;
+  /** The brand's own proof points; numbers taken from here count as sourced. */
+  proofPoints?: string | null;
 }): QaReport {
   const { body, format } = input;
   const spec = FORMATS[format as Format];
@@ -107,9 +109,12 @@ export function runQa(input: {
   // 6. Unsourced statistics: a percentage or "X times" claim not followed by a link or [SOURCE]
   const statRe = /(\d+(?:\.\d+)?\s?%|\d+x\b|\d+ times)/gi;
   const unsourced: string[] = [];
+  const proof = normalizeStat(input.proofPoints ?? "");
   for (const m of body.matchAll(statRe)) {
     const after = body.slice(m.index!, m.index! + 160);
-    if (!/\]\(|https?:\/\/|\[SOURCE|\(source/i.test(after)) unsourced.push(m[0]);
+    if (/\]\(|https?:\/\/|\[SOURCE|\(source/i.test(after)) continue;
+    if (proof && proof.includes(normalizeStat(m[0]))) continue; // the brand's own proof point
+    unsourced.push(m[0]);
   }
   checks.push({
     id: "unsourced_stats",
@@ -122,12 +127,12 @@ export function runQa(input: {
 
   // 7. Keyword placement (blogs/landing pages)
   if (input.keyword && (format === "blog" || format === "landing_page")) {
-    const kw = input.keyword.toLowerCase();
+    const kwRe = keywordRegex(input.keyword);
     const firstHeading = (body.match(/^#\s+(.+)$/m)?.[1] ?? "").toLowerCase();
     const intro = stripMarkdown(body).toLowerCase().split(/\s+/).slice(0, 120).join(" ");
-    const inTitle = firstHeading.includes(kw);
-    const inIntro = intro.includes(kw);
-    const occurrences = lower.split(kw).length - 1;
+    const inTitle = new RegExp(kwRe.source).test(firstHeading);
+    const inIntro = new RegExp(kwRe.source).test(intro);
+    const occurrences = (stripMarkdown(lower).match(kwRe) ?? []).length;
     const missing = [!inTitle && "title", !inIntro && "intro"].filter(Boolean);
     checks.push({
       id: "keyword",
@@ -170,6 +175,27 @@ export function runQa(input: {
   const weights = { pass: 1, warn: 0.6, fail: 0 } as const;
   const score = Math.round((checks.reduce((s, c) => s + weights[c.status], 0) / checks.length) * 100);
   return { score, words, readingEase: ease, checks };
+}
+
+/** Words a writer naturally adds inside a search phrase ("tips for denver", "care in the suburbs"). */
+const FILLER = new Set(["a", "an", "the", "for", "in", "of", "to", "and", "with", "on", "near", "at", "your", "our", "my", "best"]);
+
+/**
+ * Matches a target keyword the way a reader would: its main words in order, case-insensitive,
+ * allowing plurals and up to two small connecting words between them.
+ * "spring lawn care tips denver suburbs" matches "spring lawn care tips for Denver suburbs".
+ */
+export function keywordRegex(keyword: string) {
+  const words = keyword.toLowerCase().match(/[a-z0-9'’]+/g) ?? [];
+  const core = words.filter((w) => !FILLER.has(w));
+  const parts = (core.length ? core : words).map((w) => `${escapeRe(w.replace(/s$/, ""))}(?:s|es)?`);
+  const gap = `(?:[^a-z0-9]+(?:${[...FILLER].join("|")})){0,2}[^a-z0-9]+`;
+  return new RegExp(`\\b${parts.join(gap)}\\b`, "gi");
+}
+
+/** "97 %", "97%" and "97 percent" compare equal. */
+function normalizeStat(s: string) {
+  return s.toLowerCase().replace(/\s+percent/g, "%").replace(/\s+/g, "");
 }
 
 function escapeRe(s: string) {

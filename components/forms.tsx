@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, type ReactNode } from "react";
+import { useActionState, useEffect, useState, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import type { ActionState } from "@/lib/actions";
 import { Button, type BtnVariant } from "./ui";
@@ -15,10 +15,18 @@ export function Submit({ children, pending, variant = "primary", size = "md", na
   );
 }
 
+/** Errors stay until the next submit; success messages fade after a few seconds, so a
+ * "Writing 5 pieces..." note doesn't linger once the work is done. */
 export function Msg({ state }: { state: ActionState }) {
+  const [hiddenOk, setHiddenOk] = useState<ActionState>(undefined);
+  useEffect(() => {
+    if (!state?.ok) return;
+    const t = setTimeout(() => setHiddenOk(state), 6000);
+    return () => clearTimeout(t);
+  }, [state]);
   if (!state) return null;
   if (state.error) return <p className="text-sm text-red-600" role="alert">{state.error}</p>;
-  if (state.ok) return <p className="text-sm text-emerald-700">{state.ok}</p>;
+  if (state.ok && hiddenOk !== state) return <p className="text-sm text-emerald-700" role="status">{state.ok}</p>;
   return null;
 }
 

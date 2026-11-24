@@ -38,3 +38,24 @@ test("email sequence structure", () => {
   const r = runQa({ body: [1, 2, 3, 4, 5].map(one).join("\n"), format: "email_sequence" });
   assert.equal(r.checks.find((c) => c.id === "structure")!.status, "pass");
 });
+
+test("keyword matches with small connecting words and plurals", () => {
+  const body = "# Spring Lawn Care Tips for Denver Suburbs\n\nThese spring lawn care tip ideas help Denver suburb owners. More spring lawn care tips in the Denver suburbs below.\n\n## A\n\n## B\n\n## C\n\n## D\n\nBook a call.";
+  const kw = runQa({ body, format: "blog", keyword: "spring lawn care tips denver suburbs" }).checks.find((c) => c.id === "keyword")!;
+  assert.equal(kw.status, "pass");
+  assert.match(kw.detail, /used 2x/);
+});
+
+test("keyword still fails when the words are absent", () => {
+  const body = "# Mowing guide\n\nHow to mow.\n\n## A\n\n## B\n\n## C\n\n## D\n\nBook a call.";
+  const kw = runQa({ body, format: "blog", keyword: "spring lawn care tips denver suburbs" }).checks.find((c) => c.id === "keyword")!;
+  assert.equal(kw.status, "fail");
+});
+
+test("numbers from the brand's proof points count as sourced", () => {
+  const body = "# Title\n\n97% of customers renew. Bookings grew 40% last year. Book a call.";
+  const r = runQa({ body, format: "linkedin_post", proofPoints: "- 97 % of customers renew for the next season" });
+  const s = r.checks.find((c) => c.id === "unsourced_stats")!;
+  assert.equal(s.status, "warn");
+  assert.match(s.detail, /1 number\(s\).*40%/);
+});

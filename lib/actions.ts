@@ -244,7 +244,7 @@ export async function saveBody(itemId: string, _: ActionState, f: FormData): Pro
     const body = String(f.get("body") ?? "");
     const version = item.version + 1;
     await db.$transaction([
-      db.contentItem.update({ where: { id: itemId }, data: { body, version, status: item.status === "requested" || item.status === "planned" ? "draft" : item.status, qaReport: qaFor(item, body, item.brand.voiceProfile) } }),
+      db.contentItem.update({ where: { id: itemId }, data: { body, version, status: item.status === "requested" || item.status === "planned" ? "draft" : item.status, qaReport: qaFor(item, body, item.brand) } }),
       db.revision.create({ data: { itemId, version, body, reason: "Manual edit" } }),
     ]);
     revalidatePath(`/app/content/${itemId}`);
@@ -286,7 +286,7 @@ export async function restoreRevision(itemId: string, revisionId: string) {
   if (!rev) return;
   const version = item.version + 1;
   await db.$transaction([
-    db.contentItem.update({ where: { id: itemId }, data: { body: rev.body, version, qaReport: qaFor(item, rev.body, item.brand.voiceProfile) } }),
+    db.contentItem.update({ where: { id: itemId }, data: { body: rev.body, version, qaReport: qaFor(item, rev.body, item.brand) } }),
     db.revision.create({ data: { itemId, version, body: rev.body, reason: `Restored v${rev.version}` } }),
   ]);
   revalidatePath(`/app/content/${itemId}`);
