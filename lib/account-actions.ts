@@ -39,11 +39,13 @@ export async function resetPassword(token: string, _: FormState, f: FormData): P
   const password = str(f, "password");
   if (password.length < 8) return { error: "Use at least 8 characters." };
   if (password !== str(f, "confirm")) return { error: "The passwords don't match." };
-  const rec = await db.passwordResetToken.findUnique({ where: { tokenHash: hashToken(token) }, include: { user: true } });
+  const rec = await db.passwordResetToken.findUnique({ where: { tokenHash: hashToken(token) } });
   if (!rec || rec.usedAt || rec.expiresAt < new Date()) return { error: "This reset link is invalid or has expired. Request a new one." };
+  // Claim the token atomically so two simultaneous submits can't both use it.
+  const claimed = await db.passwordResetToken.updateMany({ where: { id: rec.id, usedAt: null }, data: { usedAt: new Date() } });
+  if (claimed.count !== 1) return { error: "This reset link has already been used. Request a new one." };
   const [user] = await db.$transaction([
     db.user.update({ where: { id: rec.userId }, data: { passwordHash: await bcrypt.hash(password, 10), sessionVersion: { increment: 1 } } }),
-    db.passwordResetToken.update({ where: { id: rec.id }, data: { usedAt: new Date() } }),
     db.passwordResetToken.deleteMany({ where: { userId: rec.userId, usedAt: null } }),
   ]);
   await createSession(user);
@@ -52,6 +54,7 @@ export async function resetPassword(token: string, _: FormState, f: FormData): P
 
 export async function changePassword(_: FormState, f: FormData): Promise<FormState> {
   const { user } = await requireUser();
+  if (!(await rateLimit(`password-change:${user.id}`, 5, 15 * 60_000))) return { error: "Too many attempts. Wait 15 minutes and try again." };
   const next = str(f, "password");
   // Google-only accounts have no password yet; they're already signed in, so they can set one.
   if (user.passwordHash && !(await bcrypt.compare(str(f, "current"), user.passwordHash))) return { error: "Your current password is wrong." };
@@ -111,13 +114,15 @@ export async function acceptInvite(token: string, _: FormState, f: FormData): Pr
   const invite = await db.invite.findUnique({ where: { tokenHash: hashToken(token) } });
   if (!invite || invite.acceptedAt || invite.expiresAt < new Date()) return { error: "This invite is invalid or has expired. Ask for a new one." };
   if (await db.user.findUnique({ where: { email: invite.email } })) return { error: "That email already has a Leadloom account. Log in instead." };
+  // Claim the invite atomically: an invite link works exactly once, even if submitted twice at the same moment.
+  const claimed = await db.invite.updateMany({ where: { id: invite.id, acceptedAt: null }, data: { acceptedAt: new Date() } });
+  if (claimed.count !== 1) return { error: "This invite has already been used." };
   const user = await db.user.create({
     data: {
       email: invite.email, name, passwordHash: await bcrypt.hash(password, 10),
       memberships: { create: { workspaceId: invite.workspaceId, role: invite.role } },
     },
   });
-  await db.invite.update({ where: { id: invite.id }, data: { acceptedAt: new Date() } });
   await createSession(user);
   redirect("/app");
 }

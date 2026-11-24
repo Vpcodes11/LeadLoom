@@ -4,7 +4,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
-import { createSession, destroySession, requireUser } from "./auth";
+import { createSession, destroySession, requireOwner, requireUser } from "./auth";
+import { FORMATS } from "./formats";
+import { newToken } from "./tokens";
 import { extractVoice, planFunnel } from "./ai";
 import { brandContext } from "./brand";
 import { ACTIVE, enqueue, qaFor } from "./jobs";
@@ -14,7 +16,9 @@ import { layout, sendEmail } from "./email";
 
 export type ActionState = { error?: string; ok?: string } | undefined;
 
-const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
+const str = (f: FormData, k: string, max = 20_000) => String(f.get(k) ?? "").trim().slice(0, max);
+const STAGES = ["awareness", "consideration", "decision"];
+const STATUSES = ["requested", "planned", "draft", "in_review", "changes_requested", "approved", "delivered"];
 const errMsg = (e: unknown) => {
   console.error("[action] failed:", e instanceof Error ? e.message : e);
   return e instanceof Error ? e.message : "Something went wrong";
@@ -97,7 +101,8 @@ export async function createBrand(_: ActionState, f: FormData): Promise<ActionSt
   let id: string;
   try {
     await assertCanAddBrand(workspace.id, workspace.plan);
-    const brand = await db.brand.create({ data: { ...data, workspaceId: workspace.id } });
+    // Review links grant access without a login, so they get a cryptographically random token.
+    const brand = await db.brand.create({ data: { ...data, workspaceId: workspace.id, reviewToken: newToken().token } });
     id = brand.id;
     if (data.voiceSamples && data.voiceSamples.length > 200) {
       await assertAiAllowed(workspace.id, workspace.plan, "voice");
@@ -188,10 +193,11 @@ export async function requestContent(brandId: string, _: ActionState, f: FormDat
     await ownBrand(brandId);
     const item = await db.contentItem.create({
       data: {
-        brandId, title, format: str(f, "format") || "blog", stage: str(f, "stage") || "awareness",
-        keyword: str(f, "keyword") || null, angle: str(f, "angle") || null, cta: str(f, "cta") || null,
-        notes: str(f, "notes") || null, status: "requested",
-        dueDate: str(f, "dueDate") ? new Date(str(f, "dueDate")) : null,
+        brandId, title, format: str(f, "format") in FORMATS ? str(f, "format") : "blog",
+        stage: STAGES.includes(str(f, "stage")) ? str(f, "stage") : "awareness",
+        keyword: str(f, "keyword", 200) || null, angle: str(f, "angle", 2000) || null, cta: str(f, "cta", 500) || null,
+        notes: str(f, "notes", 5000) || null, status: "requested",
+        dueDate: validDate(str(f, "dueDate")),
       },
     });
     id = item.id;
@@ -199,6 +205,11 @@ export async function requestContent(brandId: string, _: ActionState, f: FormDat
     return { error: errMsg(e) };
   }
   redirect(`/app/content/${id}`);
+}
+
+function validDate(s: string) {
+  const d = s ? new Date(s) : null;
+  return d && !Number.isNaN(d.getTime()) ? d : null;
 }
 
 async function hasActiveJob(itemId: string) {
@@ -272,6 +283,7 @@ export async function aiRevise(itemId: string, _: ActionState, f: FormData): Pro
 }
 
 export async function setStatus(itemId: string, status: string) {
+  if (!STATUSES.includes(status)) throw new Error("Unknown status");
   const { user } = await ownItem(itemId);
   await db.contentItem.update({ where: { id: itemId }, data: { status } });
   const note: Record<string, string> = { in_review: "Sent for client review", approved: "Marked approved", delivered: "Marked delivered" };
@@ -315,8 +327,10 @@ export async function deleteItem(itemId: string) {
 
 export async function clientFeedback(token: string, itemId: string, _: ActionState, f: FormData): Promise<ActionState> {
   const decision = str(f, "decision"); // approve | changes
-  const name = str(f, "name") || "Client";
-  const body = str(f, "body");
+  if (decision !== "approve" && decision !== "changes") return { error: "Choose Approve or Request changes." };
+  const name = str(f, "name", 80) || "Client";
+  const body = str(f, "body", 5000);
+  if (!(await rateLimit(`review:${token}:${await clientIp()}`, 30, 60 * 60_000))) return { error: "Too many submissions. Try again in an hour." };
   const item = await db.contentItem.findFirst({
     where: { id: itemId, brand: { reviewToken: token }, status: { in: ["in_review", "changes_requested", "approved"] } },
     include: { brand: { include: { workspace: { include: { members: { include: { user: true } } } } } } },
@@ -341,8 +355,13 @@ export async function clientFeedback(token: string, itemId: string, _: ActionSta
 }
 
 export async function updateAgencyName(_: ActionState, f: FormData): Promise<ActionState> {
-  const { workspace } = await requireUser();
-  await db.workspace.update({ where: { id: workspace.id }, data: { agencyName: str(f, "agencyName") || null, name: str(f, "name") || workspace.name } });
+  let workspace;
+  try {
+    ({ workspace } = await requireOwner()); // owner-only: this name is what clients see on the review portal
+  } catch (e) {
+    return { error: errMsg(e) };
+  }
+  await db.workspace.update({ where: { id: workspace.id }, data: { agencyName: str(f, "agencyName", 80) || null, name: str(f, "name", 80) || workspace.name } });
   revalidatePath("/app/settings");
   return { ok: "Saved" };
 }

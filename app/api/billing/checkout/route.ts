@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const base = process.env.APP_URL ?? "http://localhost:3000";
   if (role !== "owner") return NextResponse.redirect(`${base}/app/billing?error=owner`, 303);
   const plan = String((await req.formData()).get("plan")) as PlanId;
-  if (!(plan in PLANS) || plan === "trial" || !billingEnabled() || !productOf(plan)) {
+  if (!Object.hasOwn(PLANS, plan) || plan === "trial" || !billingEnabled() || !productOf(plan)) {
     return NextResponse.redirect(`${base}/app/billing?error=billing`, 303);
   }
   try {
