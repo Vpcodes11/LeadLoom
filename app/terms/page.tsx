@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LegalPage, contactLine } from "@/components/legal";
 
 export const metadata = { title: "Terms of Service · Leadloom" };
@@ -17,7 +18,7 @@ export default function Terms() {
       <ul>
         <li>The free trial includes a one-time allowance of AI drafts. Paid plans are billed monthly in advance through Dodo Payments, our reseller and merchant of record, whose terms also apply to your purchase.</li>
         <li>Plans renew automatically until cancelled. You can cancel anytime from the Billing page (Manage subscription); access continues until the end of the paid period.</li>
-        <li>Unused monthly allowances do not roll over. Fees are non-refundable except where the law requires otherwise.</li>
+        <li>Unused monthly allowances do not roll over. Refunds, including our 7-day money-back guarantee on your first payment, are described in our <Link href="/refund-policy" className="underline">Refund &amp; Cancellation Policy</Link>.</li>
         <li>We may change prices with at least 30 days&apos; notice; changes apply from your next billing period.</li>
       </ul>
 

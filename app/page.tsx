@@ -165,7 +165,7 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-slate-200 py-8 text-center text-sm text-slate-500">
-        © {new Date().getFullYear()} Leadloom · <Link href="/terms" className="hover:underline">Terms</Link> · <Link href="/privacy" className="hover:underline">Privacy</Link>
+        © {new Date().getFullYear()} Leadloom · <Link href="/terms" className="hover:underline">Terms</Link> · <Link href="/privacy" className="hover:underline">Privacy</Link> · <Link href="/refund-policy" className="hover:underline">Refunds</Link>
       </footer>
     </div>
   );

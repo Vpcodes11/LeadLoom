@@ -2,5 +2,5 @@ import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = process.env.APP_URL ?? "http://localhost:3000";
-  return ["", "/signup", "/login", "/terms", "/privacy"].map((p) => ({ url: `${base}${p}`, changeFrequency: "monthly", priority: p === "" ? 1 : 0.5 }));
+  return ["", "/signup", "/login", "/terms", "/privacy", "/refund-policy"].map((p) => ({ url: `${base}${p}`, changeFrequency: "monthly", priority: p === "" ? 1 : 0.5 }));
 }

@@ -41,6 +41,7 @@ export default async function Billing({ searchParams }: { searchParams: Promise<
           );
         })}
       </div>
+      <p className="mt-6 text-center text-sm text-slate-500">Prices in USD; local taxes may apply at checkout. Cancel anytime. 7-day money-back guarantee on your first payment. <a href="/refund-policy" className="underline">Refund policy</a></p>
     </div>
   );
 }

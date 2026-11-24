@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Logo } from "./logo";
 
-export const UPDATED = "November 17, 2026";
+export const UPDATED = "November 24, 2026";
 
 export function contactLine() {
   const email = process.env.SUPPORT_EMAIL;
