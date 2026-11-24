@@ -15,7 +15,7 @@ export default async function Billing({ searchParams }: { searchParams: Promise<
       <PageHeader title="Billing" sub={workspace.plan === "trial" || !(workspace.plan in PLANS) ? `Free trial: ${used} of ${current.piecesPerMonth} trial pieces used. Choose a plan to keep going.` : `You're on ${current.name}: ${used}/${current.piecesPerMonth} pieces used this month, up to ${current.brands} brand(s).`}
         actions={role === "owner" && workspace.billingCustomerId && <form action="/api/billing/portal" method="post"><Button variant="secondary">Manage subscription</Button></form>} />
       {sp.success && <p className="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">Thanks! Your plan will update in a few seconds.</p>}
-      {sp.changed && <p className="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">Plan change requested. Your new limits apply as soon as the payment goes through.</p>}
+      {sp.changed && <p className="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">Plan change requested. Your new plan starts as soon as the payment goes through (usually within a minute); refresh this page to see it.</p>}
       {sp.error === "owner" && <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Only the workspace owner can change the plan.</p>}
       {role === "owner" && (sp.error === "billing" || !billingEnabled()) && <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Billing isn&apos;t configured yet. Set DODO_PAYMENTS_API_KEY and DODO_PRODUCT_* in .env to enable checkout.</p>}
       {(sp.error === "checkout" || sp.error === "portal") && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">We couldn&apos;t reach the payment provider. Please try again in a minute.</p>}

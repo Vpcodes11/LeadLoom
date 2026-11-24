@@ -82,7 +82,9 @@ export async function changePlan(subscriptionId: string, plan: PlanId) {
   if (!productId) throw new Error(`No Dodo product configured for ${plan}`);
   await dodo(`/subscriptions/${encodeURIComponent(subscriptionId)}/change-plan`, {
     method: "POST",
-    body: JSON.stringify({ product_id: productId, quantity: 1, proration_billing_mode: "prorated_immediately" }),
+    // prevent_change: the subscription stays on its current plan (and product_id) until the
+    // plan-change payment succeeds, so webhooks only grant the new limits once it is paid.
+    body: JSON.stringify({ product_id: productId, quantity: 1, proration_billing_mode: "prorated_immediately", on_payment_failure: "prevent_change" }),
   });
 }
 
