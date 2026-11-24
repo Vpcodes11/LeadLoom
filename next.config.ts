@@ -12,6 +12,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
+  // Landing-page photography (Unsplash License) is served from Unsplash's CDN.
+  images: { remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }] },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

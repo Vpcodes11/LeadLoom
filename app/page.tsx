@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Instrument_Serif, Inter, JetBrains_Mono } from "next/font/google";
 import { Nav } from "@/components/landing/nav";
-import { Scene } from "@/components/landing/scene";
+import { Photo, PHOTOS } from "@/components/landing/photo";
 import { Steps } from "@/components/landing/steps";
 import { QaMeter } from "@/components/landing/qa-meter";
 import { Reveal } from "@/components/landing/reveal";
@@ -19,10 +19,9 @@ export default function Home() {
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-white focus:px-4 focus:py-2">Skip to content</a>
       <Nav />
 
-      {/* Hero: a painted dusk meadow; golden threads gather from the whole sky into one lamp. */}
-      <section className="relative mx-3 overflow-hidden rounded-[32px] text-white sm:mx-5">
-        <Scene variant="dawn" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1b2a4a]/40 via-transparent via-55% to-[#14200f]/45" />
+      {/* Hero: real golden-hour photograph, darkened at the top for the headline. */}
+      <section className="relative mx-3 overflow-hidden rounded-[32px] bg-[#4a4a32] text-white sm:mx-5">
+        <Photo src={PHOTOS.meadow} position="50% 30%" priority overlay="linear-gradient(180deg, rgba(14,18,24,.52) 0%, rgba(14,18,24,.3) 38%, rgba(14,18,24,.06) 62%, rgba(10,14,8,.5) 100%)" />
         <div className="relative mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center px-6 pb-10 pt-36 text-center sm:pt-44">
           <p className="rise glass mono rounded-full px-3.5 py-1.5 text-[11px] uppercase" style={{ animationDelay: "80ms" }}>For marketing &amp; SEO agencies</p>
           <h1 className="rise serif mt-7 text-[54px] leading-[0.98] drop-shadow-[0_2px_24px_rgba(20,30,60,.35)] sm:text-[84px] lg:text-[104px]" style={{ animationDelay: "180ms" }}>

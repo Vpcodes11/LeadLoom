@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { Reveal } from "./reveal";
-import { Scene } from "./scene";
+import { Photo, PHOTOS } from "./photo";
 
 export function Eyebrow({ children, light }: { children: React.ReactNode; light?: boolean }) {
   return <p className={`mono text-[11px] uppercase ${light ? "text-white/60" : "text-[var(--ink-2)]"}`}>{children}</p>;
@@ -103,8 +103,7 @@ export function RetainerMath() {
   const a = PLANS.agency;
   return (
     <section className="relative mx-3 overflow-hidden rounded-[32px] bg-[var(--night)] text-white sm:mx-5">
-      <Scene variant="night" />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#050a19]/30 via-transparent to-[#050a19]/70" />
+      <Photo src={PHOTOS.night} position="50% 60%" overlay="linear-gradient(180deg, rgba(4,8,18,.55) 0%, rgba(4,8,18,.25) 55%, rgba(4,8,18,.55) 100%)" />
       <div className="relative mx-auto max-w-5xl px-6 pb-56 pt-24 text-center sm:pb-72">
         <Reveal>
           <Eyebrow light>The maths</Eyebrow>
@@ -194,9 +193,8 @@ export function Faq() {
 
 export function Closing() {
   return (
-    <section className="relative mx-3 mb-3 overflow-hidden rounded-[32px] text-white sm:mx-5 sm:mb-5">
-      <Scene variant="dawn" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/40" />
+    <section className="relative mx-3 mb-3 overflow-hidden rounded-[32px] bg-[#3d3b26] text-white sm:mx-5 sm:mb-5">
+      <Photo src={PHOTOS.field} position="50% 55%" overlay="linear-gradient(180deg, rgba(14,16,12,.55) 0%, rgba(14,16,12,.3) 50%, rgba(14,16,12,.5) 100%)" />
       <div className="relative mx-auto flex min-h-[640px] max-w-3xl flex-col items-center px-6 pt-28 text-center sm:min-h-[720px]">
         <Eyebrow light>Start this week</Eyebrow>
         <h2 className="serif mt-4 text-[46px] leading-[1.02] drop-shadow-[0_2px_20px_rgba(0,0,0,.25)] sm:text-[72px]">Try it on your most <em>demanding</em> client.</h2>
