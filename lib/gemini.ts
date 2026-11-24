@@ -31,12 +31,24 @@ type Interaction = {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function interact(body: Record<string, unknown>): Promise<string> {
+/**
+ * Time budgets. Interactive calls (voice profile, funnel plan) run inside a server action the
+ * user is waiting on, and the hosting platform can cut a request off at ~60s, which leaves the
+ * browser spinning forever. They must answer or fail well inside that. Background drafts get longer.
+ */
+type Budget = { totalMs: number; perAttemptMs: number };
+const INTERACTIVE: Budget = { totalMs: 50_000, perAttemptMs: 25_000 };
+const BACKGROUND: Budget = { totalMs: 240_000, perAttemptMs: 90_000 };
+
+async function interact(body: Record<string, unknown>, budget: Budget): Promise<string> {
   // Each model once, then one more pass after a pause. Busy (429/5xx) or slow models are skipped.
-  const plan = [...models().map((m) => ({ m, delay: 0 })), ...models().map((m, i) => ({ m, delay: i === 0 ? 10_000 : 0 }))];
+  const plan = [...models().map((m) => ({ m, delay: 0 })), ...models().map((m, i) => ({ m, delay: i === 0 ? 5_000 : 0 }))];
+  const deadline = Date.now() + budget.totalMs;
   let lastError = "";
   for (const [attempt, { m: model, delay }] of plan.entries()) {
     if (delay) await sleep(delay);
+    const remaining = deadline - Date.now();
+    if (remaining < 5_000) break;
     const started = Date.now();
     let res: Response;
     try {
@@ -49,7 +61,7 @@ async function interact(body: Record<string, unknown>): Promise<string> {
         },
         body: JSON.stringify({ model, store: false, ...body }),
         cache: "no-store",
-        signal: AbortSignal.timeout(45_000),
+        signal: AbortSignal.timeout(Math.min(budget.perAttemptMs, remaining)),
       });
     } catch (e) {
       lastError = e instanceof Error ? e.message : String(e);
@@ -78,12 +90,13 @@ async function interact(body: Record<string, unknown>): Promise<string> {
     if (!text) throw new Error(`Gemini returned no text (status ${data.status ?? "unknown"}${data.error?.message ? `: ${data.error.message}` : ""}).`);
     return text;
   }
-  throw new Error(`The AI is busy right now (rate limit). Please try again in a minute. [${lastError}]`);
+  console.error(`[gemini] gave up after ${budget.totalMs / 1000}s budget: ${lastError}`);
+  throw new Error("The free AI models are busy right now. Please try again in a minute.");
 }
 
 /** Free-form Markdown/text generation. */
 export function geminiText(system: string, input: string, thinking: "low" | "medium" | "high" = "medium") {
-  return interact({ system_instruction: system, input, generation_config: { thinking_level: thinking, max_output_tokens: 32000 } });
+  return interact({ system_instruction: system, input, generation_config: { thinking_level: thinking, max_output_tokens: 32000 } }, BACKGROUND);
 }
 
 /** JSON output that must match a Zod schema (validated after parsing). */
@@ -92,9 +105,9 @@ export async function geminiJson<T extends z.ZodType>(schema: T, input: string, 
   const text = await interact({
     ...(system ? { system_instruction: system } : {}),
     input,
-    generation_config: { thinking_level: "medium", max_output_tokens: 16000 },
+    generation_config: { thinking_level: "low", max_output_tokens: 16000 },
     response_format: { type: "text", mime_type: "application/json", schema: jsonSchema },
-  });
+  }, INTERACTIVE);
   // Tolerate a fenced ```json block, just in case.
   const raw = text.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
   return schema.parse(JSON.parse(raw));
