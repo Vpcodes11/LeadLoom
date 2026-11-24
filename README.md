@@ -235,7 +235,7 @@ Open http://localhost:3000 and log in with **`demo@leadloom.dev` / `demo1234`**.
 | `APP_URL` | ✅ | Public URL, used for checkout redirects and client review links. |
 | `CRON_SECRET` | ✅ | Protects `/api/jobs/run`, the stuck-job recovery endpoint. `openssl rand -hex 32` |
 | `GEMINI_API_KEY` | For real AI (free) | Google Gemini API key from [AI Studio](https://aistudio.google.com/apikey). Free tier, rate-limited. Takes priority when set. |
-| `GEMINI_MODEL` | Optional | Defaults to `gemini-3.8-flash`. |
+| `GEMINI_MODEL` | Optional | Comma-separated fallback list. Default `gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash-lite`; a busy model falls through to the next. |
 | `ANTHROPIC_API_KEY` | For real AI (paid) | Claude API key. Used when no Gemini key is set, or with `AI_PROVIDER=claude`. |
 | `AI_PROVIDER` | Optional | `gemini` or `claude` to force a provider when both keys are set. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | For Google sign-in | OAuth web client from Google Cloud Console. Redirect URI: `{APP_URL}/api/auth/google/callback`. The button is hidden until both are set. |

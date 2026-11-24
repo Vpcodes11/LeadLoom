@@ -12,7 +12,16 @@ const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/interactions"
 const API_REVISION = "2026-05-20";
 
 export const geminiEnabled = () => Boolean(process.env.GEMINI_API_KEY);
-const model = () => process.env.GEMINI_MODEL || "gemini-3.8-flash";
+/**
+ * Models tried in order. Free-tier models get "high demand" 503s and 429 rate limits,
+ * so a busy model falls through to the next one right away. GEMINI_MODEL (comma-separated)
+ * overrides the list. All three defaults have a free tier.
+ */
+const models = () =>
+  (process.env.GEMINI_MODEL || "gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash-lite")
+    .split(",")
+    .map((m) => m.trim())
+    .filter(Boolean);
 
 type Interaction = {
   status?: string;
@@ -23,10 +32,10 @@ type Interaction = {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function interact(body: Record<string, unknown>): Promise<string> {
-  // Free-tier rate limits return 429; overloaded models return 503. Back off and retry.
-  const delays = [0, 5_000, 15_000];
+  // Each model once, then one more pass after a pause. Busy (429/5xx) or slow models are skipped.
+  const plan = [...models().map((m) => ({ m, delay: 0 })), ...models().map((m, i) => ({ m, delay: i === 0 ? 10_000 : 0 }))];
   let lastError = "";
-  for (const [attempt, delay] of delays.entries()) {
+  for (const [attempt, { m: model, delay }] of plan.entries()) {
     if (delay) await sleep(delay);
     const started = Date.now();
     let res: Response;
@@ -38,16 +47,16 @@ async function interact(body: Record<string, unknown>): Promise<string> {
           "x-goog-api-key": String(process.env.GEMINI_API_KEY),
           "Api-Revision": API_REVISION,
         },
-        body: JSON.stringify({ model: model(), store: false, ...body }),
+        body: JSON.stringify({ model, store: false, ...body }),
         cache: "no-store",
-        signal: AbortSignal.timeout(90_000),
+        signal: AbortSignal.timeout(45_000),
       });
     } catch (e) {
       lastError = e instanceof Error ? e.message : String(e);
-      console.error(`[gemini] attempt ${attempt + 1} network/timeout after ${Date.now() - started}ms: ${lastError}`);
+      console.error(`[gemini] attempt ${attempt + 1} model=${model} network/timeout after ${Date.now() - started}ms: ${lastError}`);
       continue;
     }
-    console.log(`[gemini] attempt ${attempt + 1} model=${model()} status=${res.status} in ${Date.now() - started}ms`);
+    console.log(`[gemini] attempt ${attempt + 1} model=${model} status=${res.status} in ${Date.now() - started}ms`);
     if (res.status === 429 || res.status >= 500) {
       lastError = `${res.status} ${(await res.text().catch(() => "")).slice(0, 300)}`;
       console.error(`[gemini] retryable error: ${lastError}`);
