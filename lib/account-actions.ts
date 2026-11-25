@@ -7,6 +7,7 @@ import { db } from "./db";
 import { clearGoogleSignIn, createSession, destroySession, recentGoogleSignIn, requireOwner, requireUser } from "./auth";
 import { rateLimit } from "./ratelimit";
 import { hashToken, newToken } from "./tokens";
+import { normEmail, passwordError } from "./security";
 import { planOf } from "./plans";
 import { billingEnabled, cancelSubscription } from "./billing";
 
@@ -21,12 +22,13 @@ const HOUR = 3_600_000;
 export async function changePassword(_: FormState, f: FormData): Promise<FormState> {
   const { user } = await requireUser();
   if (!(await rateLimit(`password-change:${user.id}`, 5, 15 * 60_000))) return { error: "Too many attempts. Wait 15 minutes and try again." };
-  const next = str(f, "password");
+  const next = String(f.get("password") ?? "");
   // Google-only accounts have no password yet; they're already signed in, so they can set one.
   // A sign-in with Google in the last 15 minutes also proves the email, so a forgotten password can be replaced.
   const proven = !user.passwordHash || (await recentGoogleSignIn(user.id));
   if (!proven && !(await bcrypt.compare(str(f, "current"), user.passwordHash!))) return { error: "Your current password is wrong." };
-  if (next.length < 8) return { error: "Use at least 8 characters." };
+  const pwErr = passwordError(next);
+  if (pwErr) return { error: pwErr };
   const updated = await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, 10), sessionVersion: { increment: 1 } } });
   await createSession(updated); // keep this device signed in, sign out every other one
   await clearGoogleSignIn();
@@ -38,7 +40,7 @@ export async function changePassword(_: FormState, f: FormData): Promise<FormSta
 export async function createInvite(_: FormState, f: FormData): Promise<FormState> {
   try {
     const { workspace, user } = await requireOwner();
-    const email = str(f, "email").toLowerCase();
+    const email = normEmail(str(f, "email"));
     if (!email.includes("@")) return { error: "Enter a valid email address." };
     const [members, pending] = await Promise.all([
       db.membership.count({ where: { workspaceId: workspace.id } }),
@@ -74,8 +76,10 @@ export async function removeMember(membershipId: string) {
 
 export async function acceptInvite(token: string, _: FormState, f: FormData): Promise<FormState> {
   const name = str(f, "name");
-  const password = str(f, "password");
-  if (!name || password.length < 8) return { error: "Enter your name and a password of 8+ characters." };
+  const password = String(f.get("password") ?? "");
+  if (!name) return { error: "Enter your name." };
+  const pwErr = passwordError(password);
+  if (pwErr) return { error: pwErr };
   const invite = await db.invite.findUnique({ where: { tokenHash: hashToken(token) } });
   if (!invite || invite.acceptedAt || invite.expiresAt < new Date()) return { error: "This invite is invalid or has expired. Ask for a new one." };
   if (await db.user.findUnique({ where: { email: invite.email } })) return { error: "That email already has a Leadloom account. Log in instead." };

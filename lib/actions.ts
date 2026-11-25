@@ -10,6 +10,7 @@ import { newToken } from "./tokens";
 import { extractVoice, planFunnel } from "./ai";
 import { brandContext } from "./brand";
 import { ACTIVE, enqueue, qaFor } from "./jobs";
+import { normEmail, passwordError } from "./security";
 import { clientIp, rateLimit } from "./ratelimit";
 import { assertAiAllowed, assertCanAddBrand } from "./usage";
 
@@ -25,12 +26,17 @@ const errMsg = (e: unknown) => {
 
 // ---------- Auth ----------
 
+let dummy: Promise<string> | undefined;
+const dummyHash = () => (dummy ??= bcrypt.hash("not-a-real-password", 10));
+
 export async function signup(_: ActionState, f: FormData): Promise<ActionState> {
-  const email = str(f, "email").toLowerCase();
+  const email = normEmail(str(f, "email"));
   const name = str(f, "name");
-  const password = str(f, "password");
+  const password = String(f.get("password") ?? "");
   const company = str(f, "company") || `${name}'s workspace`;
-  if (!email.includes("@") || password.length < 8 || !name) return { error: "Enter your name, a valid email and a password of 8+ characters." };
+  if (!email.includes("@") || !name) return { error: "Enter your name and a valid email." };
+  const pwErr = passwordError(password);
+  if (pwErr) return { error: pwErr };
   if (!(await rateLimit(`signup:${await clientIp()}`, 3, 86_400_000))) return { error: "Too many accounts created from this network today. Try again tomorrow." };
   if (await db.user.findUnique({ where: { email } })) return { error: "An account with this email already exists." };
   const user = await db.user.create({
@@ -44,14 +50,16 @@ export async function signup(_: ActionState, f: FormData): Promise<ActionState> 
 }
 
 export async function login(_: ActionState, f: FormData): Promise<ActionState> {
-  const email = str(f, "email").toLowerCase();
+  const email = normEmail(str(f, "email"));
   const ip = await clientIp();
   if (!(await rateLimit(`login:${email}`, 10, 15 * 60_000)) || !(await rateLimit(`login-ip:${ip}`, 30, 15 * 60_000))) {
     return { error: "Too many login attempts. Wait 15 minutes and try again." };
   }
   const user = await db.user.findUnique({ where: { email } });
   if (user && !user.passwordHash) return { error: "This account signs in with Google. Use \"Continue with Google\", or reset your password to add one." };
-  if (!user || !(await bcrypt.compare(str(f, "password"), user.passwordHash!))) return { error: "Wrong email or password." };
+  // With no user, compare against a throwaway hash so unknown emails take as long to reject (no account discovery by timing).
+  const ok = await bcrypt.compare(String(f.get("password") ?? "").slice(0, 200), user?.passwordHash ?? (await dummyHash()));
+  if (!user || !ok) return { error: "Wrong email or password." };
   await createSession(user);
   redirect("/app");
 }
@@ -251,7 +259,8 @@ export async function generateFunnelDrafts(funnelId: string, _: ActionState): Pr
 export async function saveBody(itemId: string, _: ActionState, f: FormData): Promise<ActionState> {
   try {
     const { item } = await ownItem(itemId);
-    const body = String(f.get("body") ?? "");
+    // Cap: real pieces are far smaller, and it bounds the quality-check work per save.
+    const body = String(f.get("body") ?? "").slice(0, 200_000);
     const version = item.version + 1;
     await db.$transaction([
       db.contentItem.update({ where: { id: itemId }, data: { body, version, status: item.status === "requested" || item.status === "planned" ? "draft" : item.status, qaReport: qaFor(item, body, item.brand) } }),

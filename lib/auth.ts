@@ -41,7 +41,7 @@ export async function recentGoogleSignIn(userId: string) {
   const token = (await cookies()).get(GOOGLE_FRESH)?.value;
   if (!token) return false;
   try {
-    const { payload } = await jwtVerify(token, secret());
+    const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"] });
     return payload.sub === userId && payload.k === "google_fresh";
   } catch {
     return false;
@@ -59,7 +59,7 @@ async function readSession(): Promise<{ id: string; sv: number } | null> {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secret());
+    const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"] });
     return typeof payload.sub === "string" ? { id: payload.sub, sv: Number(payload.sv ?? 0) } : null;
   } catch {
     return null;

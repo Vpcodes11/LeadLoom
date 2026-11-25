@@ -189,7 +189,9 @@ export function keywordRegex(keyword: string) {
   const words = keyword.toLowerCase().match(/[a-z0-9'’]+/g) ?? [];
   const core = words.filter((w) => !FILLER.has(w));
   const parts = (core.length ? core : words).map((w) => `${escapeRe(w.replace(/s$/, ""))}(?:s|es)?`);
-  const gap = `(?:[^a-z0-9]+(?:${[...FILLER].join("|")})){0,2}[^a-z0-9]+`;
+  // One separator run, then up to two "filler word + separator" groups. Two separator runs side by side
+  // would backtrack quadratically on long runs of spaces or punctuation (ReDoS).
+  const gap = `[^a-z0-9]+(?:(?:${[...FILLER].join("|")})[^a-z0-9]+){0,2}`;
   return new RegExp(`\\b${parts.join(gap)}\\b`, "gi");
 }
 

@@ -4,7 +4,10 @@ import { db } from "./db";
 
 export async function clientIp() {
   const h = await headers();
-  return h.get("x-forwarded-for")?.split(",")[0].trim() || h.get("x-real-ip") || "unknown";
+  // Only trust the header the hosting platform itself sets; a client can forge any other.
+  // Vercel sets x-real-ip. On Cloudflare, set TRUSTED_IP_HEADER=cf-connecting-ip.
+  const trusted = (process.env.TRUSTED_IP_HEADER || "x-real-ip").toLowerCase();
+  return h.get(trusted)?.split(",")[0].trim() || "unknown";
 }
 
 /** Returns false if `key` has already been hit `max` times within `windowMs`. Records a hit when allowed. */

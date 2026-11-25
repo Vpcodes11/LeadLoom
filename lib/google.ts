@@ -3,6 +3,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { decodeJwt } from "jose";
 
 /** Google OAuth 2.0 / OpenID Connect (authorization code + PKCE). Endpoints can be overridden only for local tests. */
+import { normEmail } from "./security";
+
 const AUTH_URL = process.env.GOOGLE_AUTH_URL_OVERRIDE || "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = process.env.GOOGLE_TOKEN_URL_OVERRIDE || "https://oauth2.googleapis.com/token";
 const ISSUERS = ["https://accounts.google.com", "accounts.google.com", ...(process.env.GOOGLE_ISSUER_OVERRIDE ? [process.env.GOOGLE_ISSUER_OVERRIDE] : [])];
@@ -51,5 +53,5 @@ export async function finishAuth(code: string, verifier: string): Promise<Google
   if (c.aud !== process.env.GOOGLE_CLIENT_ID) throw new Error("bad audience");
   if (!c.exp || c.exp * 1000 < Date.now()) throw new Error("expired token");
   if (c.email_verified !== true || typeof c.email !== "string" || typeof c.sub !== "string") throw new Error("email not verified");
-  return { sub: c.sub, email: c.email.toLowerCase(), name: typeof c.name === "string" && c.name ? c.name : c.email.split("@")[0] };
+  return { sub: c.sub, email: normEmail(c.email), name: typeof c.name === "string" && c.name ? c.name : c.email.split("@")[0] };
 }
