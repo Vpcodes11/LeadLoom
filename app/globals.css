@@ -43,6 +43,8 @@ body { @apply bg-paper text-ink antialiased; }
 .prose-ll a { @apply text-brand-600 underline; }
 .prose-ll strong { @apply font-semibold text-slate-900; }
 .prose-ll code { @apply bg-slate-100 rounded px-1 text-sm; }
+.prose-ll pre { @apply my-4 rounded-xl bg-paper p-4 text-sm leading-6; max-width: 100%; overflow-x: auto; }
+.prose-ll pre code { @apply bg-transparent p-0; }
 .prose-ll table { @apply w-full text-sm my-4; display: block; overflow-x: auto; }
 .prose-ll th, .prose-ll td { @apply border border-slate-200 px-2 py-1 text-left; }
 
