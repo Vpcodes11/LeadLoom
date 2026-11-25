@@ -20,7 +20,7 @@ export default function ForgotPassword() {
       sub="Sign in with Google using the same email address. It opens your existing account, and you can then choose a new password in Settings."
       footer={<Link className="text-brand-600" href="/login">Back to log in</Link>}
     >
-      <GoogleButton />
+      <GoogleButton divider={false} />
       <ol className="list-decimal space-y-1.5 pl-5 text-sm text-slate-600">
         {!googleEnabled() && <li>Google sign-in isn&apos;t available right now.</li>}
         <li>Continue with the Google account for your Leadloom email.</li>

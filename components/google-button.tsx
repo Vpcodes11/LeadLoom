@@ -1,7 +1,7 @@
 import { googleEnabled } from "@/lib/google";
 
 /** Renders only when Google OAuth is configured. A plain link: the OAuth flow is a full-page redirect. */
-export function GoogleButton({ invite, label = "Continue with Google" }: { invite?: string; label?: string }) {
+export function GoogleButton({ invite, label = "Continue with Google", divider = true }: { invite?: string; label?: string; divider?: boolean }) {
   if (!googleEnabled()) return null;
   const href = `/api/auth/google${invite ? `?invite=${encodeURIComponent(invite)}` : ""}`;
   return (
@@ -15,7 +15,7 @@ export function GoogleButton({ invite, label = "Continue with Google" }: { invit
         </svg>
         {label}
       </a>
-      <div className="my-4 flex items-center gap-3 text-xs text-slate-400"><div className="h-px flex-1 bg-slate-200" />or<div className="h-px flex-1 bg-slate-200" /></div>
+      {divider ? <div className="my-4 flex items-center gap-3 text-xs text-slate-400"><div className="h-px flex-1 bg-slate-200" />or<div className="h-px flex-1 bg-slate-200" /></div> : <div className="mb-4" />}
     </>
   );
 }
