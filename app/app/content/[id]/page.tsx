@@ -85,7 +85,7 @@ export default async function ContentPage({ params }: { params: Promise<{ id: st
           </Card>
         </div>
 
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5 [&_code]:break-all">
           {qa && (
             <Card>
               <div className="flex items-center justify-between">
@@ -155,7 +155,7 @@ export default async function ContentPage({ params }: { params: Promise<{ id: st
               <ul className="divide-y divide-slate-100 text-sm">
                 {item.revisions.map((r) => (
                   <li key={r.id} className="flex items-center justify-between gap-2 py-2">
-                    <div className="min-w-0"><span className="font-medium">v{r.version}</span> <span className="text-slate-500 truncate">· {r.reason}</span></div>
+                    <div className="min-w-0 truncate"><span className="font-medium">v{r.version}</span> <span className="text-slate-500">· {r.reason}</span></div>
                     {r.version !== item.version && <form action={restoreRevision.bind(null, item.id, r.id)}><Button size="sm" variant="ghost">Restore</Button></form>}
                   </li>
                 ))}
