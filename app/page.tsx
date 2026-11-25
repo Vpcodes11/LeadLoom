@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Instrument_Serif, Inter, JetBrains_Mono } from "next/font/google";
 import { Nav } from "@/components/landing/nav";
 import { BgVideo } from "@/components/landing/bg-video";
 import { Ambience } from "@/components/landing/ambience";
@@ -9,15 +8,13 @@ import { QaMeter } from "@/components/landing/qa-meter";
 import { Reveal } from "@/components/landing/reveal";
 import { Motion } from "@/components/landing/motion";
 import { Closing, Compare, Eyebrow, Faq, Footer, Pricing, Portal, Problem, RetainerMath } from "@/components/landing/sections";
+import { llFonts } from "@/components/landing/fonts";
 import "./landing.css";
 
-const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-ll-serif", display: "swap" });
-const sans = Inter({ subsets: ["latin"], variable: "--font-ll-sans", display: "swap" });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400"], variable: "--font-ll-mono", display: "swap" });
 
 export default function Home() {
   return (
-    <div className={`ll ${serif.variable} ${sans.variable} ${mono.variable} min-h-screen pt-3 sm:pt-5`}>
+    <div className={`ll ${llFonts} min-h-screen pt-3 sm:pt-5`}>
       {/* Before first paint: hide the headline only when it will be animated (reduced motion keeps it static). */}
       <script dangerouslySetInnerHTML={{ __html: "if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('ll-motion')" }} />
       <Motion />

@@ -74,7 +74,16 @@ const LAMP_MOTES = [
   { x: "50.5%", y: "75%", s: "8px", d: "11s", delay: "7.4s", dx: "5vw", dy: "-52vh", desk: true },
 ];
 
-export function Ambience({ scene }: { scene: "day" | "night" | "dusk" }) {
+/** Sparkles drifting up from anywhere along a short strip (no lamp in frame). */
+const BAND_MOTES = [
+  { x: "14%", y: "92%", s: "6px", d: "7s", delay: "0s", dx: "2vw", dy: "-14vh" },
+  { x: "33%", y: "96%", s: "8px", d: "8.5s", delay: "2.1s", dx: "-3vw", dy: "-16vh" },
+  { x: "58%", y: "94%", s: "6px", d: "7.5s", delay: "4.2s", dx: "3vw", dy: "-13vh" },
+  { x: "79%", y: "95%", s: "7px", d: "9s", delay: "1.1s", dx: "-2vw", dy: "-15vh", desk: true },
+  { x: "91%", y: "93%", s: "5px", d: "8s", delay: "5.6s", dx: "-4vw", dy: "-12vh", desk: true },
+];
+
+export function Ambience({ scene }: { scene: "day" | "night" | "dusk" | "band" }) {
   return (
     <div className="amb pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       {scene === "day" && (
@@ -106,6 +115,17 @@ export function Ambience({ scene }: { scene: "day" | "night" | "dusk" }) {
           <Firefly x="10%" y="90%" d="11s" delay="-5s" dx="6vw" dy="-3vh" desk />
           <Firefly x="90%" y="70%" d="8.5s" delay="-7s" dx="-5vw" dy="-4vh" desk />
           <Firefly x="53%" y="92%" d="12s" delay="-2.5s" dx="2vw" dy="-7vh" desk />
+        </>
+      )}
+      {scene === "band" && (
+        <>
+          <Bird y="24%" w="26px" d="30s" delay="-9s" bob="-2vh" />
+          <Bird y="34%" w="18px" d="30s" delay="-8.3s" bob="-1.5vh" />
+          <Bird y="18%" w="22px" d="40s" delay="-22s" bob="1.5vh" rtl desk />
+          <Glint x="22%" y="40%" s="12px" d="3.6s" delay="0s" />
+          <Glint x="64%" y="28%" s="10px" d="4.2s" delay="1.6s" />
+          <Glint x="86%" y="54%" s="12px" d="3.9s" delay="2.8s" />
+          {BAND_MOTES.map((m, i) => <Mote key={i} {...m} />)}
         </>
       )}
       {scene === "dusk" && (

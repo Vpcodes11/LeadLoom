@@ -9,6 +9,7 @@ import type { QaReport } from "@/lib/qa";
 import { ActionButton, ActionForm, Submit } from "@/components/forms";
 import { Editor } from "@/components/editor";
 import { CopyButton } from "@/components/copy-button";
+import { SparkleBurst } from "@/components/sparkle-burst";
 import { Badge, Button, Card, Empty, PageHeader, Textarea, btnClass, cx } from "@/components/ui";
 import { JobWatcher } from "@/components/job-watcher";
 
@@ -42,7 +43,7 @@ export default async function ContentPage({ params }: { params: Promise<{ id: st
       <p className="mb-2 text-sm"><Link href={back.href} className="text-brand-600">← {back.label}</Link></p>
       <PageHeader
         title={item.title}
-        sub={<span className="flex flex-wrap items-center gap-2"><Badge tone={item.status}>{statusLabel(item.status)}</Badge><Badge tone={item.stage}>{item.stage}</Badge><span>{formatLabel(item.format)}</span>{item.version > 0 && <span>· v{item.version}</span>}{item.dueDate && <span>· due {item.dueDate.toLocaleDateString()}</span>}</span>}
+        sub={<span className="flex flex-wrap items-center gap-2"><span className="relative inline-flex"><Badge tone={item.status}>{statusLabel(item.status)}</Badge>{item.status === "approved" && <SparkleBurst once={`${item.id}:${item.version}`} />}</span><Badge tone={item.stage}>{item.stage}</Badge><span>{formatLabel(item.format)}</span>{item.version > 0 && <span>· v{item.version}</span>}{item.dueDate && <span>· due {item.dueDate.toLocaleDateString()}</span>}</span>}
         actions={<>
           {(NEXT[item.status] ?? []).map((n) => (
             <form key={n.status} action={setStatus.bind(null, item.id, n.status)}><Button variant={n.variant ?? "primary"}>{n.label}</Button></form>
