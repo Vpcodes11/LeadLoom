@@ -47,13 +47,13 @@ export function Portal() {
           <li>— No logins for clients</li><li>— Comments land on the right piece</li><li>— White-label on Agency</li>
         </ul>
       </Reveal>
-      <Reveal className="order-1 flex justify-center lg:order-2" delay={120}>
-        <div className="relative w-[260px] rounded-[44px] bg-[#1f1c19] p-2.5 shadow-[0_50px_90px_-40px_rgba(28,26,23,.6)] sm:w-[300px]">
+      <div data-rise3d className="order-1 flex justify-center lg:order-2">
+        <div data-hover-tilt className="relative w-[260px] rounded-[44px] bg-[#1f1c19] p-2.5 shadow-[0_50px_90px_-40px_rgba(28,26,23,.6)] sm:w-[300px]">
           <div className="overflow-hidden rounded-[36px] bg-white">
             <Image src="/product/client-portal-mobile.png" alt="A client reviewing a draft on a phone, with Approve and Request changes buttons" width={1170} height={2532} sizes="300px" className="h-auto w-full" />
           </div>
         </div>
-      </Reveal>
+      </div>
     </section>
   );
 }
@@ -113,7 +113,7 @@ export function RetainerMath() {
         <div className="mt-14 grid gap-10 sm:grid-cols-3">
           {[[`$${a.price}`, "a month on the Agency plan"], [`$${(a.price / a.piecesPerMonth).toFixed(2)}`, `per piece across ${a.piecesPerMonth} pieces`], ["2 × $500", "client retainers cover it, with profit left"]].map(([n, l], i) => (
             <Reveal key={l} delay={i * 120}>
-              <p className="serif text-[56px] leading-none">{n}</p>
+              <p className="serif text-[56px] leading-none" data-count={i < 2 ? "" : undefined}>{n}</p>
               <p className="mt-3 text-sm text-white/70">{l}</p>
             </Reveal>
           ))}
@@ -132,12 +132,12 @@ export function Pricing() {
         <h2 className="serif mt-4 text-[42px] leading-[1.04] sm:text-[56px]">Simple monthly plans.</h2>
         <p className="mt-4 text-[15px] text-[var(--ink-2)]">Start with 5 free pieces, no card. Cancel anytime. 7-day money-back on your first payment.</p>
       </Reveal>
-      <div className="mt-14 grid gap-5 md:grid-cols-3">
-        {ids.map((id, i) => {
+      <div data-fan className="mt-14 grid gap-5 md:grid-cols-3">
+        {ids.map((id) => {
           const p = PLANS[id];
           const dark = id === "agency";
           return (
-            <Reveal key={id} delay={i * 100} className={`flex flex-col rounded-[26px] p-7 ${dark ? "bg-[var(--ink)] text-white shadow-[0_40px_80px_-40px_rgba(28,26,23,.7)]" : "border border-[var(--line)] bg-[#fbf8f2]"}`}>
+            <div key={id} data-fan-card data-featured={dark ? "" : undefined} className={`flex flex-col rounded-[26px] p-7 ${dark ? "bg-[var(--ink)] text-white shadow-[0_40px_80px_-40px_rgba(28,26,23,.7)]" : "border border-[var(--line)] bg-[#fbf8f2]"}`}>
               <div className="flex items-center justify-between">
                 <h3 className="text-[17px] font-medium">{p.name}</h3>
                 {dark && <span className="mono rounded-full bg-[var(--amber)] px-2.5 py-1 text-[10px] uppercase text-[var(--ink)]">Best for agencies</span>}
@@ -154,7 +154,7 @@ export function Pricing() {
               <div className="mt-auto pt-8">
                 <Link href="/signup" className={`block rounded-full py-3 text-center text-sm font-medium ${dark ? "btn-light" : "btn-ink"}`}>Start free</Link>
               </div>
-            </Reveal>
+            </div>
           );
         })}
       </div>

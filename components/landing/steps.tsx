@@ -31,7 +31,7 @@ export function Steps() {
               <p className="mono text-[11px] uppercase text-[var(--ink-2)]">0{i + 1} · {s.k}</p>
               <h3 className="serif mt-3 text-[34px] leading-[1.05] sm:text-[42px]">{s.t}</h3>
               <p className="mt-4 max-w-md text-[15px] leading-7 text-[var(--ink-2)]">{s.d}</p>
-              <div className="frame mt-6 lg:hidden">
+              <div data-rise3d className="frame mt-6 lg:hidden">
                 <div className="screen"><Image src={s.img} alt={s.alt} width={2880} height={1800} sizes="100vw" className="h-auto w-full" /></div>
               </div>
             </div>
@@ -40,10 +40,11 @@ export function Steps() {
       </ol>
       <div className="hidden lg:block">
         <div className="sticky top-[14vh]">
-          <div className="frame">
-            <div className="screen relative aspect-[16/10]">
+          <div data-hover-tilt className="frame">
+            {/* Each screenshot flips in depth: past steps tilt up and away, upcoming ones wait tilted below. */}
+            <div className="screen relative aspect-[16/10] [perspective:1600px]">
               {STEPS.map((s, i) => (
-                <Image key={s.img} src={s.img} alt={s.alt} fill sizes="55vw" className={`object-cover object-top transition-opacity duration-700 ${active === i ? "opacity-100" : "opacity-0"}`} />
+                <Image key={s.img} src={s.img} alt={s.alt} fill sizes="55vw" className={`ll-flip object-cover object-top ${i < active ? "ll-flip-past" : i > active ? "ll-flip-next" : "ll-flip-now"}`} />
               ))}
             </div>
           </div>

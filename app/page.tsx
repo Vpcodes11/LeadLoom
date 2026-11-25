@@ -6,6 +6,7 @@ import { BgVideo } from "@/components/landing/bg-video";
 import { Steps } from "@/components/landing/steps";
 import { QaMeter } from "@/components/landing/qa-meter";
 import { Reveal } from "@/components/landing/reveal";
+import { Motion } from "@/components/landing/motion";
 import { Closing, Compare, Eyebrow, Faq, Footer, Pricing, Portal, Problem, RetainerMath } from "@/components/landing/sections";
 import "./landing.css";
 
@@ -16,15 +17,18 @@ const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400"], variable: "--
 export default function Home() {
   return (
     <div className={`ll ${serif.variable} ${sans.variable} ${mono.variable} min-h-screen pt-3 sm:pt-5`}>
+      {/* Before first paint: hide the headline only when it will be animated (reduced motion keeps it static). */}
+      <script dangerouslySetInnerHTML={{ __html: "if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('ll-motion')" }} />
+      <Motion />
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-white focus:px-4 focus:py-2">Skip to content</a>
       <Nav />
 
       {/* Hero: the Leadloom film. Golden threads from the whole sky gather into one desk lamp. */}
-      <section className="relative mx-3 overflow-hidden rounded-[32px] bg-[#4f6a95] text-white sm:mx-5">
+      <section data-hero className="relative mx-3 overflow-hidden rounded-[32px] bg-[#4f6a95] text-white will-change-transform sm:mx-5">
         <BgVideo name="hero" position="50% 70%" overlay="linear-gradient(180deg, rgba(10,16,30,.45) 0%, rgba(10,16,30,.22) 40%, rgba(10,16,30,.05) 62%, rgba(8,12,6,.45) 100%)" />
-        <div className="relative mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center px-6 pb-10 pt-24 text-center sm:pt-[13vh]">
+        <div data-hero-content className="relative mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center px-6 pb-10 pt-24 text-center sm:pt-[13vh]">
           <p className="rise glass mono rounded-full px-3.5 py-1.5 text-[11px] uppercase" style={{ animationDelay: "80ms" }}>For marketing &amp; SEO agencies</p>
-          <h1 className="rise serif mt-5 text-[50px] leading-[0.98] drop-shadow-[0_2px_24px_rgba(20,30,60,.35)] sm:text-[76px] lg:text-[92px]" style={{ animationDelay: "180ms" }}>
+          <h1 data-split className="serif mt-5 text-[50px] leading-[0.98] drop-shadow-[0_2px_24px_rgba(20,30,60,.35)] sm:text-[76px] lg:text-[92px]">
             Content that <em>leads</em> somewhere.
           </h1>
           <p className="rise mt-5 max-w-xl text-[16px] leading-7 text-white/90 sm:text-[17px]" style={{ animationDelay: "320ms" }}>
@@ -47,11 +51,13 @@ export default function Home() {
             <Eyebrow>One workspace for every client</Eyebrow>
             <h2 className="serif mt-4 text-[42px] leading-[1.04] sm:text-[58px]">Strategy, writing and sign-off. <em>Woven together.</em></h2>
           </Reveal>
-          <Reveal className="frame mx-auto mt-14 max-w-5xl" delay={120}>
-            <div className="screen">
-              <Image src="/product/dashboard.png" alt="Leadloom dashboard showing every client's content and what needs attention" width={2880} height={1800} sizes="(min-width: 1024px) 1000px, 100vw" className="h-auto w-full" priority />
+          <div data-rise3d className="mx-auto mt-14 max-w-5xl">
+            <div data-hover-tilt className="frame">
+              <div className="screen">
+                <Image src="/product/dashboard.png" alt="Leadloom dashboard showing every client's content and what needs attention" width={2880} height={1800} sizes="(min-width: 1024px) 1000px, 100vw" className="h-auto w-full" priority />
+              </div>
             </div>
-          </Reveal>
+          </div>
         </section>
 
         <Problem />
@@ -70,7 +76,7 @@ export default function Home() {
             <h2 className="serif mt-4 text-[42px] leading-[1.04] sm:text-[56px]">Every draft is checked <em>before you read it.</em></h2>
             <p className="mt-5 max-w-md text-[15px] leading-7 text-[var(--ink-2)]">Ten checks on every piece, scored 0–100: length, readability, AI-sounding phrases, the brand’s banned words, unsourced statistics, keyword placement, structure and a clear next step. The same draft always gets the same score.</p>
           </Reveal>
-          <Reveal delay={120}><QaMeter /></Reveal>
+          <div data-rise3d><div data-hover-tilt><QaMeter /></div></div>
         </section>
 
         <Portal />
