@@ -12,7 +12,6 @@ import { brandContext } from "./brand";
 import { ACTIVE, enqueue, qaFor } from "./jobs";
 import { clientIp, rateLimit } from "./ratelimit";
 import { assertAiAllowed, assertCanAddBrand } from "./usage";
-import { layout, sendEmail } from "./email";
 
 export type ActionState = { error?: string; ok?: string } | undefined;
 
@@ -342,15 +341,7 @@ export async function clientFeedback(token: string, itemId: string, _: ActionSta
     db.comment.create({ data: { itemId, author: name, fromClient: true, kind: decision === "approve" ? "approval" : "change_request", body: body || "Approved" } }),
   ]);
   // No revalidatePath: it would refresh the portal and hide the confirmation. App pages are dynamic, so they show the new status on next load.
-  const approved = decision === "approve";
-  await sendEmail(
-    item.brand.workspace.members.map((m) => m.user.email),
-    approved ? `${name} approved "${item.title}"` : `${name} requested changes to "${item.title}"`,
-    layout(approved ? "Content approved" : "Changes requested", [
-      `${name} from ${item.brand.name} ${approved ? "approved" : "requested changes to"} "${item.title}".`,
-      ...(body && !approved ? [`Their feedback: "${body}"`] : []),
-    ], { label: "Open in Leadloom", url: `${process.env.APP_URL ?? "http://localhost:3000"}/app/content/${item.id}` }),
-  );
+  // The agency sees the new status and the client's comment on the dashboard ("Needs your attention").
   return { ok: decision === "approve" ? "Approved — thank you!" : "Feedback sent. We'll revise it." };
 }
 

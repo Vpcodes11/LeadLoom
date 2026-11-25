@@ -86,10 +86,10 @@ Every piece across every brand on one board: Requested → Planned → Draft →
 Copy as Markdown or download a `.md` file, ready for WordPress, Webflow, Ghost, Notion or Google Docs.
 
 ### 👥 Teams and accounts
-Sign up and log in with email or **Continue with Google** (existing accounts are linked automatically). Invite teammates by email or link (per-plan seats), with owner and editor roles. Password reset, change password (signs out other devices) and full workspace deletion.
+Sign up and log in with email or **Continue with Google** (existing accounts are linked automatically). Invite teammates with a link (per-plan seats), with owner and editor roles. Forgot a password? Sign in with Google using the same email, then set a new one in Settings within 15 minutes. Change password (signs out other devices) and full workspace deletion.
 
 ### 📧 Notifications
-Email alerts when a client approves or requests changes, plus invite and password-reset emails (via Resend).
+Client approvals and change requests show up on the dashboard under "Needs your attention". Leadloom sends no email.
 
 ### 💳 Plans and billing
 A one-time free trial, then Dodo Payments checkout, plan switching, the Dodo customer portal and webhooks, with monthly limits per plan. Dodo Payments is the merchant of record, so it handles global sales tax and VAT and pays out to you (works for founders in India and other countries where Stripe is limited).
@@ -239,8 +239,6 @@ Open http://localhost:3000 and log in with **`demo@leadloom.dev` / `demo1234`**.
 | `ANTHROPIC_API_KEY` | For real AI (paid) | Claude API key. Used when no Gemini key is set, or with `AI_PROVIDER=claude`. |
 | `AI_PROVIDER` | Optional | `gemini` or `claude` to force a provider when both keys are set. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | For Google sign-in | OAuth web client from Google Cloud Console. Redirect URI: `{APP_URL}/api/auth/google/callback`. The button is hidden until both are set. |
-| `RESEND_API_KEY` | For email | Resend API key. Without it, invites show a copyable link and emails are logged. |
-| `EMAIL_FROM` | For email | Sender, e.g. `Leadloom <noreply@yourdomain.com>` (domain verified in Resend). |
 | `SUPPORT_EMAIL` | Recommended | Contact address shown on the Terms and Privacy pages. |
 | `DODO_PAYMENTS_API_KEY` | For billing | Dodo Payments API key (Developer → API Keys), created in the same mode as below. |
 | `DODO_PAYMENTS_WEBHOOK_KEY` | For billing | Signing secret of the webhook below. |
@@ -255,7 +253,7 @@ Open http://localhost:3000 and log in with **`demo@leadloom.dev` / `demo1234`**.
 2. **App (Vercel).** Import this repository at [vercel.com/new](https://vercel.com/new) and add the environment variables above. Keep **Fluid compute** enabled.
 3. **Deploy.** The build runs `prisma migrate deploy`, so the schema is applied automatically.
 4. **Dodo Payments.** Create three monthly subscription products (Starter $49, Growth $149, Agency $399) and copy their product IDs. Add a webhook endpoint `https://YOUR_DOMAIN/api/billing/webhook` subscribed to all `subscription.*` events and copy its signing secret. After checkout, Dodo returns the customer to `/api/billing/return`, which links the subscription to the workspace. Test the whole flow in test mode first, then switch `DODO_PAYMENTS_ENVIRONMENT` to `live_mode` with live keys and live product IDs.
-5. **Health check.** `GET /api/health` checks the database and reports which integrations (AI, billing, email) are configured. Point an uptime monitor at it.
+5. **Health check.** `GET /api/health` checks the database and reports which integrations (AI, billing) are configured. Point an uptime monitor at it.
 6. **Cron.** [`vercel.json`](vercel.json) calls `/api/jobs/run` once a day (the Vercel Hobby limit) to retry stuck AI jobs. On Vercel Pro, change the schedule to `*/5 * * * *` for faster recovery.
 
 ---

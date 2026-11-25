@@ -1,15 +1,15 @@
-import { requireUser } from "@/lib/auth";
+import { recentGoogleSignIn, requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { updateAgencyName } from "@/lib/actions";
 import { changePassword, createInvite, deleteAccount, removeMember, revokeInvite } from "@/lib/account-actions";
 import { planOf } from "@/lib/plans";
-import { emailEnabled } from "@/lib/email";
 import { ActionForm, Submit } from "@/components/forms";
 import { ChangePasswordForm, DeleteAccountForm, InviteForm } from "@/components/account-forms";
 import { Badge, Button, Card, Field, Input, PageHeader } from "@/components/ui";
 
 export default async function Settings() {
   const { workspace, user, role } = await requireUser();
+  const googleProven = Boolean(user.passwordHash) && (await recentGoogleSignIn(user.id));
   const isOwner = role === "owner";
   const plan = planOf(workspace.plan);
   const [members, invites] = await Promise.all([
@@ -60,7 +60,7 @@ export default async function Settings() {
         {isOwner && (
           <div className="mt-4">
             <InviteForm action={createInvite} />
-            {!emailEnabled() && <p className="mt-2 text-xs text-slate-500">Email isn&apos;t configured, so you&apos;ll get a link to send yourself.</p>}
+            <p className="mt-2 text-xs text-slate-500">You&apos;ll get an invite link to send your teammate yourself.</p>
           </div>
         )}
       </Card>
@@ -68,7 +68,7 @@ export default async function Settings() {
       <Card>
         <h2 className="mb-4 font-semibold">Password</h2>
         {user.googleId && <p className="mb-3 text-sm text-slate-600">✓ Google sign-in is connected for {user.email}.</p>}
-        <ChangePasswordForm action={changePassword} hasPassword={!!user.passwordHash} />
+        <ChangePasswordForm action={changePassword} hasPassword={!!user.passwordHash} googleProven={googleProven} />
       </Card>
 
       {isOwner && (

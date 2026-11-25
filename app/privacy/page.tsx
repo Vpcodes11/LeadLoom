@@ -30,7 +30,6 @@ export default function Privacy() {
         <li><strong>Vercel</strong> (application hosting)</li>
         <li><strong>Dodo Payments</strong> (payments, invoicing and sales tax, as merchant of record)</li>
         <li><strong>Google</strong> (optional sign-in)</li>
-        <li><strong>Resend</strong> (transactional email, such as password resets and review notifications)</li>
       </ul>
 
       <h2>Cookies</h2>

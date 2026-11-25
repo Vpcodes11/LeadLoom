@@ -24,29 +24,6 @@ function Msg({ state }: { state: FormState }) {
   );
 }
 
-export function ForgotForm({ action }: { action: Action }) {
-  const [state, run] = useActionState(action, undefined);
-  return (
-    <form action={run} className="space-y-4">
-      <Field label="Email"><Input name="email" type="email" required autoComplete="email" /></Field>
-      <Msg state={state} />
-      <Submit pending="Sending...">Send reset link</Submit>
-    </form>
-  );
-}
-
-export function NewPasswordForm({ action }: { action: Action }) {
-  const [state, run] = useActionState(action, undefined);
-  return (
-    <form action={run} className="space-y-4">
-      <Field label="New password" hint="At least 8 characters"><Input name="password" type="password" required minLength={8} autoComplete="new-password" /></Field>
-      <Field label="Confirm password"><Input name="confirm" type="password" required minLength={8} autoComplete="new-password" /></Field>
-      <Msg state={state} />
-      <Submit pending="Saving...">Set new password</Submit>
-    </form>
-  );
-}
-
 export function AcceptInviteForm({ action, email }: { action: Action; email: string }) {
   const [state, run] = useActionState(action, undefined);
   return (
@@ -60,13 +37,15 @@ export function AcceptInviteForm({ action, email }: { action: Action; email: str
   );
 }
 
-export function ChangePasswordForm({ action, hasPassword = true }: { action: Action; hasPassword?: boolean }) {
+export function ChangePasswordForm({ action, hasPassword = true, googleProven = false }: { action: Action; hasPassword?: boolean; googleProven?: boolean }) {
   const [state, run] = useActionState(action, undefined);
   return (
     <form action={run} className="space-y-3">
-      {hasPassword
-        ? <Field label="Current password"><Input name="current" type="password" required autoComplete="current-password" /></Field>
-        : <p className="text-sm text-slate-600">You sign in with Google. You can also set a password to log in with your email.</p>}
+      {!hasPassword
+        ? <p className="text-sm text-slate-600">You sign in with Google. You can also set a password to log in with your email.</p>
+        : googleProven
+          ? <p className="rounded-xl bg-brand-50 p-3 text-sm text-brand-700">You just signed in with Google, so you can choose a new password without the current one.</p>
+          : <Field label="Current password" hint="Forgot it? Log out, sign in with Google, then come back here."><Input name="current" type="password" required autoComplete="current-password" /></Field>}
       <Field label="New password" hint="At least 8 characters"><Input name="password" type="password" required minLength={8} autoComplete="new-password" /></Field>
       <Msg state={state} />
       <Submit variant="secondary" pending="Saving...">{hasPassword ? "Change password" : "Set password"}</Submit>

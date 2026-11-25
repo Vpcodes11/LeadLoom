@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { createSession } from "@/lib/auth";
+import { createSession, markGoogleSignIn } from "@/lib/auth";
 import { finishAuth, STATE_COOKIE } from "@/lib/google";
 import { hashToken } from "@/lib/tokens";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
@@ -55,6 +55,7 @@ export async function GET(req: Request) {
   }
 
   await createSession(user);
+  await markGoogleSignIn(user.id); // lets a user who forgot their password set a new one (no email resets)
   const res = NextResponse.redirect(`${base}/app`);
   res.cookies.delete({ name: STATE_COOKIE, path: "/api/auth/google" });
   return res;

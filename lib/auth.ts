@@ -27,6 +27,30 @@ export async function createSession(user: { id: string; sessionVersion: number }
   });
 }
 
+/**
+ * A short-lived proof that this browser just signed in with Google. Google has verified the email,
+ * so for 15 minutes the user may set a new password without the old one (this replaces emailed
+ * reset links: Leadloom sends no email).
+ */
+const GOOGLE_FRESH = "ll_google_fresh";
+export async function markGoogleSignIn(userId: string) {
+  const token = await new SignJWT({ sub: userId, k: "google_fresh" }).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("15m").sign(secret());
+  (await cookies()).set(GOOGLE_FRESH, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 15 * 60 });
+}
+export async function recentGoogleSignIn(userId: string) {
+  const token = (await cookies()).get(GOOGLE_FRESH)?.value;
+  if (!token) return false;
+  try {
+    const { payload } = await jwtVerify(token, secret());
+    return payload.sub === userId && payload.k === "google_fresh";
+  } catch {
+    return false;
+  }
+}
+export async function clearGoogleSignIn() {
+  (await cookies()).delete(GOOGLE_FRESH);
+}
+
 export async function destroySession() {
   (await cookies()).delete(COOKIE);
 }

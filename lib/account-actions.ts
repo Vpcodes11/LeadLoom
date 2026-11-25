@@ -4,10 +4,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
-import { createSession, destroySession, requireOwner, requireUser } from "./auth";
-import { clientIp, rateLimit } from "./ratelimit";
+import { clearGoogleSignIn, createSession, destroySession, recentGoogleSignIn, requireOwner, requireUser } from "./auth";
+import { rateLimit } from "./ratelimit";
 import { hashToken, newToken } from "./tokens";
-import { emailEnabled, layout, sendEmail } from "./email";
 import { planOf } from "./plans";
 import { billingEnabled, cancelSubscription } from "./billing";
 
@@ -17,50 +16,20 @@ const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const appUrl = () => process.env.APP_URL ?? "http://localhost:3000";
 const HOUR = 3_600_000;
 
-// ---------- Password reset ----------
-
-export async function requestPasswordReset(_: FormState, f: FormData): Promise<FormState> {
-  const email = str(f, "email").toLowerCase();
-  const generic = { ok: "If an account exists for that email, a reset link is on its way. It expires in 1 hour." };
-  if (!email.includes("@")) return { error: "Enter your email address." };
-  if (!(await rateLimit(`reset:${email}`, 3, HOUR)) || !(await rateLimit(`reset-ip:${await clientIp()}`, 10, HOUR))) return generic;
-  const user = await db.user.findUnique({ where: { email } });
-  if (!user) return generic; // don't reveal which emails have accounts
-  const { token, hash } = newToken();
-  await db.passwordResetToken.create({ data: { userId: user.id, tokenHash: hash, expiresAt: new Date(Date.now() + HOUR) } });
-  await sendEmail(user.email, "Reset your Leadloom password", layout("Reset your password", [
-    `Hi ${user.name}, someone (hopefully you) asked to reset your Leadloom password.`,
-    "This link works once and expires in 1 hour. If you didn't ask for this, you can ignore this email.",
-  ], { label: "Choose a new password", url: `${appUrl()}/reset-password/${token}` }));
-  return generic;
-}
-
-export async function resetPassword(token: string, _: FormState, f: FormData): Promise<FormState> {
-  const password = str(f, "password");
-  if (password.length < 8) return { error: "Use at least 8 characters." };
-  if (password !== str(f, "confirm")) return { error: "The passwords don't match." };
-  const rec = await db.passwordResetToken.findUnique({ where: { tokenHash: hashToken(token) } });
-  if (!rec || rec.usedAt || rec.expiresAt < new Date()) return { error: "This reset link is invalid or has expired. Request a new one." };
-  // Claim the token atomically so two simultaneous submits can't both use it.
-  const claimed = await db.passwordResetToken.updateMany({ where: { id: rec.id, usedAt: null }, data: { usedAt: new Date() } });
-  if (claimed.count !== 1) return { error: "This reset link has already been used. Request a new one." };
-  const [user] = await db.$transaction([
-    db.user.update({ where: { id: rec.userId }, data: { passwordHash: await bcrypt.hash(password, 10), sessionVersion: { increment: 1 } } }),
-    db.passwordResetToken.deleteMany({ where: { userId: rec.userId, usedAt: null } }),
-  ]);
-  await createSession(user);
-  redirect("/app");
-}
+// ---------- Password ----------
 
 export async function changePassword(_: FormState, f: FormData): Promise<FormState> {
   const { user } = await requireUser();
   if (!(await rateLimit(`password-change:${user.id}`, 5, 15 * 60_000))) return { error: "Too many attempts. Wait 15 minutes and try again." };
   const next = str(f, "password");
   // Google-only accounts have no password yet; they're already signed in, so they can set one.
-  if (user.passwordHash && !(await bcrypt.compare(str(f, "current"), user.passwordHash))) return { error: "Your current password is wrong." };
+  // A sign-in with Google in the last 15 minutes also proves the email, so a forgotten password can be replaced.
+  const proven = !user.passwordHash || (await recentGoogleSignIn(user.id));
+  if (!proven && !(await bcrypt.compare(str(f, "current"), user.passwordHash!))) return { error: "Your current password is wrong." };
   if (next.length < 8) return { error: "Use at least 8 characters." };
   const updated = await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, 10), sessionVersion: { increment: 1 } } });
   await createSession(updated); // keep this device signed in, sign out every other one
+  await clearGoogleSignIn();
   return { ok: user.passwordHash ? "Password changed. Other devices have been signed out." : "Password set. You can now also log in with your email." };
 }
 
@@ -81,12 +50,8 @@ export async function createInvite(_: FormState, f: FormData): Promise<FormState
     const { token, hash } = newToken();
     await db.invite.create({ data: { workspaceId: workspace.id, email, role: "editor", tokenHash: hash, expiresAt: new Date(Date.now() + 7 * 24 * HOUR) } });
     const link = `${appUrl()}/invite/${token}`;
-    const r = await sendEmail(email, `${user.name} invited you to ${workspace.name} on Leadloom`, layout("You're invited", [
-      `${user.name} invited you to join ${workspace.name} on Leadloom, where the team plans and produces content for clients.`,
-      "The invite link expires in 7 days.",
-    ], { label: "Accept invite", url: link }));
     revalidatePath("/app/settings");
-    return { ok: r.sent ? `Invite emailed to ${email}. You can also share this link:` : `Invite created. Send ${email} this link:`, link };
+    return { ok: `Invite created. Send ${email} this link (it expires in 7 days):`, link };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Could not create the invite." };
   }
