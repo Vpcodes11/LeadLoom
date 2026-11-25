@@ -11,7 +11,7 @@ const LINKS = [
 ];
 
 /** Floating glass pill. Turns ink-dark once the hero has scrolled away so it stays readable on paper. */
-export function Nav() {
+export function Nav({ signedIn = false }: { signedIn?: boolean }) {
   const [solid, setSolid] = useState(false);
   useEffect(() => {
     const on = () => setSolid(window.scrollY > window.innerHeight * 0.75);
@@ -27,8 +27,14 @@ export function Nav() {
           {LINKS.map((l) => <a key={l.href} href={l.href} className="opacity-85 transition hover:opacity-100">{l.label}</a>)}
         </div>
         <div className="flex items-center gap-1">
-          <Link href="/login" className="hidden rounded-full px-3.5 py-2 opacity-90 transition hover:bg-white/10 sm:inline-block">Log in</Link>
-          <Link href="/signup" className="btn-light rounded-full px-4 py-2 font-medium">Start free</Link>
+          {signedIn ? (
+            <Link href="/app" className="btn-light rounded-full px-4 py-2 font-medium">Open app →</Link>
+          ) : (
+            <>
+              <Link href="/login" className="hidden rounded-full px-3.5 py-2 opacity-90 transition hover:bg-white/10 sm:inline-block">Log in</Link>
+              <Link href="/signup" className="btn-light rounded-full px-4 py-2 font-medium">Start free</Link>
+            </>
+          )}
         </div>
       </nav>
     </header>

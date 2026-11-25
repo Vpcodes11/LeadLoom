@@ -42,17 +42,24 @@ async function readSession(): Promise<{ id: string; sv: number } | null> {
   }
 }
 
-/** Returns the signed-in user and their workspace, or redirects to /login. */
-export async function requireUser() {
+/** The signed-in user and their workspace, or null (no redirect). Checks the session is still current. */
+export async function getSignedInUser() {
   const s = await readSession();
-  if (!s) redirect("/login");
+  if (!s) return null;
   const user = await db.user.findUnique({
     where: { id: s.id },
     include: { memberships: { include: { workspace: true }, orderBy: { id: "asc" } } },
   });
-  if (!user || user.sessionVersion !== s.sv || user.memberships.length === 0) redirect("/login");
+  if (!user || user.sessionVersion !== s.sv || user.memberships.length === 0) return null;
   const m = user.memberships[0];
   return { user, workspace: m.workspace, role: m.role };
+}
+
+/** Returns the signed-in user and their workspace, or redirects to /login. */
+export async function requireUser() {
+  const ctx = await getSignedInUser();
+  if (!ctx) redirect("/login");
+  return ctx;
 }
 
 /** Like requireUser, but only workspace owners (billing, team, deleting the account). */

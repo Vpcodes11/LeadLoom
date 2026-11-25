@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSignedInUser } from "@/lib/auth";
 import { AuthShell } from "@/components/auth-shell";
 import { LoginForm } from "@/components/auth-forms";
 import { GoogleButton, GOOGLE_ERRORS } from "@/components/google-button";
@@ -9,6 +11,8 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Log in · Leadloom" };
 
 export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  // Already signed in (e.g. from a landing-page button): go straight to the workspace.
+  if (await getSignedInUser()) redirect("/app");
   const { error } = await searchParams;
   return (
     <AuthShell title="Log in" footer={<>New here? <Link className="text-brand-600" href="/signup">Create an account</Link></>}>

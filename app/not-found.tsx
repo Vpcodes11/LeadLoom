@@ -1,4 +1,4 @@
 import Link from "next/link";
 export default function NotFound() {
-  return <div className="grid min-h-[60vh] place-items-center text-center"><div><h1 className="text-2xl font-bold">Not found</h1><Link href="/app" className="mt-3 inline-block text-brand-600">Back to dashboard</Link></div></div>;
+  return <div className="grid min-h-[60vh] place-items-center text-center"><div><h1 className="font-serif text-[40px]">Not found</h1><Link href="/app" className="mt-3 inline-block text-brand-600">Back to dashboard</Link></div></div>;
 }

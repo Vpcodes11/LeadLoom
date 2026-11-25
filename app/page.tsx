@@ -8,18 +8,21 @@ import { QaMeter } from "@/components/landing/qa-meter";
 import { Reveal } from "@/components/landing/reveal";
 import { Motion } from "@/components/landing/motion";
 import { Closing, Compare, Eyebrow, Faq, Footer, Pricing, Portal, Problem, RetainerMath } from "@/components/landing/sections";
+import { getOptionalUserId } from "@/lib/auth";
 import { llFonts } from "@/components/landing/fonts";
 import "./landing.css";
 
 
-export default function Home() {
+export default async function Home() {
+  // Cookie check only (no database call): a stale session just lands on /login, which shows the form.
+  const signedIn = Boolean(await getOptionalUserId());
   return (
     <div className={`ll ${llFonts} min-h-screen pt-3 sm:pt-5`}>
       {/* Before first paint: hide the headline only when it will be animated (reduced motion keeps it static). */}
       <script dangerouslySetInnerHTML={{ __html: "if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('ll-motion')" }} />
       <Motion />
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-white focus:px-4 focus:py-2">Skip to content</a>
-      <Nav />
+      <Nav signedIn={signedIn} />
 
       {/* Hero: the Leadloom film, pinned. The page below slides over it like a curtain. */}
       <section data-hero className="sticky top-3 z-0 mx-3 overflow-hidden rounded-[32px] bg-[#4f6a95] text-white sm:top-5 sm:mx-5">
@@ -35,7 +38,9 @@ export default function Home() {
             Leadloom learns each client’s voice, plans content funnels that end in a sale, writes and quality-checks every draft, and gets client sign-off with one link.
           </p>
           <div className="rise mt-7 flex flex-col items-center gap-3 sm:flex-row" style={{ animationDelay: "460ms" }}>
-            <Link href="/signup" className="btn-light rounded-full px-6 py-3 text-sm font-medium">Start free: 5 pieces, no card</Link>
+            {signedIn
+              ? <Link href="/app" className="btn-light rounded-full px-6 py-3 text-sm font-medium">Open your workspace →</Link>
+              : <Link href="/signup" className="btn-light rounded-full px-6 py-3 text-sm font-medium">Start free: 5 pieces, no card</Link>}
             <a href="#how" className="glass-lite rounded-full px-6 py-3 text-sm font-medium">See how it works</a>
           </div>
           <p className="rise mono mt-auto pt-16 text-[11px] uppercase text-white/80" style={{ animationDelay: "620ms" }}>

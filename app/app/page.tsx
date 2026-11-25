@@ -27,7 +27,7 @@ export default async function Dashboard() {
   if (brands.length === 0) {
     return (
       <div className="mx-auto max-w-xl pt-10 text-center">
-        <h1 className="text-2xl font-bold">Welcome, {user.name.split(" ")[0]} 👋</h1>
+        <h1 className="font-serif text-[44px] leading-tight">Welcome, {user.name.split(" ")[0]} 👋</h1>
         <p className="mt-2 text-slate-600">Start by adding a brand: the business you&apos;re creating content for. It takes about 3 minutes.</p>
         <LinkButton href="/app/brands/new" className="mt-6">Add a brand</LinkButton>
       </div>
@@ -40,8 +40,8 @@ export default async function Dashboard() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
         {stats.map((s) => (
           <Card key={s.label} className="p-4">
-            <div className="text-2xl font-bold">{s.value}</div>
-            <div className="text-xs text-slate-500">{s.label}</div>
+            <div className="font-serif text-[36px] leading-none">{s.value}</div>
+            <div className="font-mono mt-2 text-[10px] uppercase tracking-wider text-slate-500">{s.label}</div>
           </Card>
         ))}
       </div>

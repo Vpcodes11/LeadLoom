@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { llFonts } from "@/components/landing/fonts";
 import "./globals.css";
 
 const description = "Plan and produce connected content funnels in your brand's voice: blogs, landing pages, email sequences, case studies and social posts. Quality-checked, client-approved, delivered.";
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={llFonts} suppressHydrationWarning>
       <body>{children}</body>
     </html>
   );

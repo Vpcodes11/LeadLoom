@@ -90,7 +90,7 @@ export default async function ContentPage({ params }: { params: Promise<{ id: st
             <Card>
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold">Quality check</h2>
-                <span className={cx("text-2xl font-bold", qa.score >= 80 ? "text-emerald-600" : qa.score >= 60 ? "text-amber-600" : "text-red-600")}>{qa.score}</span>
+                <span className={cx("font-serif text-[34px] leading-none", qa.score >= 80 ? "text-emerald-600" : qa.score >= 60 ? "text-amber-600" : "text-red-600")}>{qa.score}</span>
               </div>
               <ul className="mt-3 space-y-2 text-sm">
                 {qa.checks.map((c) => (

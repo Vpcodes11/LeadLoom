@@ -26,7 +26,7 @@ export default async function Billing({ searchParams }: { searchParams: Promise<
           return (
             <Card key={id} className={isCurrent ? "ring-2 ring-brand-500" : ""}>
               <h2 className="font-semibold">{p.name}</h2>
-              <p className="text-3xl font-bold mt-2">${p.price}<span className="text-base font-normal text-slate-500">/mo</span></p>
+              <p className="font-serif text-[44px] leading-none mt-3">${p.price}<span className="text-base font-normal text-slate-500">/mo</span></p>
               <ul className="mt-3 space-y-1 text-sm text-slate-700">
                 <li>{p.piecesPerMonth} pieces / month</li>
                 <li>{p.brands} brand{p.brands > 1 ? "s" : ""}</li>
