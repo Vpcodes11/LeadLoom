@@ -28,6 +28,15 @@
 .ll .nav-clear { background: rgba(28, 34, 52, 0.38); border: 1px solid rgba(255, 255, 255, 0.22); transition: background .5s ease; }
 .ll .nav-solid { background: rgba(20, 18, 16, 0.86); border: 1px solid rgba(255, 255, 255, 0.1); transition: background .5s ease; }
 
+/* Curtain sheet: the paper page that slides up over the pinned hero film. Solid background so the
+   film never shows through gaps between sections. */
+.ll .ll-sheet {
+  margin-top: 24px;
+  background: var(--paper);
+  border-radius: 40px 40px 0 0;
+  box-shadow: 0 -24px 60px -28px rgba(10, 14, 24, .45);
+}
+
 /* Glass without live blur: for elements that move over video (a backdrop blur is recalculated every frame). */
 .ll .glass-lite {
   background: rgba(255, 255, 255, 0.16);
@@ -91,7 +100,10 @@ html.ll-motion .ll [data-split] { opacity: 0; animation: ll-show 0s 3s forwards;
 
 .ll details > summary::-webkit-details-marker { display: none; }
 
+html:has(.ll) { scroll-behavior: smooth; }
+
 @media (prefers-reduced-motion: reduce) {
+  html:has(.ll) { scroll-behavior: auto; }
   .ll .rise, .ll .ll-photo { animation: none !important; }
   .ll .reveal { opacity: 1; transform: none; transition: none; }
   .ll .ll-flip { transition: opacity .3s ease; }

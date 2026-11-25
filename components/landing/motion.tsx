@@ -4,18 +4,16 @@ import { useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
-import Lenis from "lenis";
-import "lenis/dist/lenis.css";
 
 /**
  * All landing-page motion in one place, driven by data attributes in the markup:
- *   data-hero / data-hero-content  hero film recedes into a tilted window as you scroll
+ *   data-hero / data-sheet         curtain: the page (data-sheet) slides up over the pinned hero film
  *   data-split                     headline words rise out of a blur
  *   data-rise3d                    a frame that tilts back in perspective and straightens on scroll
  *   data-hover-tilt                follows the mouse in 3D (desktop, fine pointers only)
  *   data-count                     number counts up when it scrolls into view
  *   data-fan / data-fan-card       cards fan in with depth; data-featured lifts forward
- * Lenis gives the smooth scroll; ScrollTrigger reads Lenis's position every frame.
+ * Scrolling is native (no smooth-scroll library); ScrollTrigger reads the real scroll position.
  * With reduced motion none of this runs and the page stays fully static and readable.
  */
 export function Motion() {
@@ -27,12 +25,8 @@ export function Motion() {
     }
     gsap.registerPlugin(ScrollTrigger, SplitText);
 
-    // Anchor links glide; the sections' own scroll-margin (scroll-mt-24) leaves room for the floating nav.
-    const lenis = new Lenis({ lerp: 0.1, anchors: true });
-    lenis.on("scroll", ScrollTrigger.update);
-    const tick = (time: number) => lenis.raf(time * 1000);
-    gsap.ticker.add(tick);
-    gsap.ticker.lagSmoothing(0);
+    // Native scrolling (no smooth-scroll library): the browser's own scroll is the smoothest there is.
+    // Anchor links glide with CSS scroll-behavior; section scroll margins clear the floating nav.
 
     const mm = gsap.matchMedia();
     mm.add({ desktop: "(min-width: 768px)", mobile: "(max-width: 767px)" }, (ctx) => {
@@ -46,39 +40,28 @@ export function Motion() {
         gsap.from(split.words, { yPercent: 45, opacity: 0, filter: "blur(10px)", duration: 1.1, ease: "power3.out", stagger: 0.07, delay: 0.1 });
       }
 
-      // Hero film recedes into a window tilting away as you scroll past it.
-      // Transform and opacity only: both run on the GPU compositor without repainting the film.
-      // (Animating border-radius repainted the whole video layer every frame and made it stutter.)
+      // Curtain: the hero is pinned (CSS position: sticky) and the page slides up over it as a sheet.
+      // The scroll itself is native, so it is as smooth as the browser; the film is never transformed.
+      // Here we only dim the film and lift the hero copy (opacity/transform on light layers), and once
+      // the sheet covers the hero we stop the film and hide it so it costs nothing further down.
       const hero = document.querySelector<HTMLElement>("[data-hero]");
       const heroContent = document.querySelector<HTMLElement>("[data-hero-content]");
-      if (hero) {
-        // While the hero is moving, hold the film on its current frame: decoding 1080p video and
-        // compositing it through a 3D transform every frame is what stutters on laptop GPUs.
-        // It resumes when you scroll back to the top.
-        // The <video> mounts a moment after this runs, so look it up when needed. The flag tells
-        // BgVideo not to restart it (e.g. on a tab switch) while it is frozen.
-        let frozen = false;
-        const freeze = (on: boolean) => {
-          if (on === frozen) return;
-          frozen = on;
+      const dim = document.querySelector<HTMLElement>("[data-hero-dim]");
+      const sheet = document.querySelector<HTMLElement>("[data-sheet]");
+      if (hero && sheet) {
+        const rising = { trigger: sheet, start: "top bottom", end: "top top", scrub: true };
+        if (dim) gsap.fromTo(dim, { opacity: 0 }, { opacity: 0.55, ease: "none", scrollTrigger: rising });
+        if (heroContent) gsap.to(heroContent, { y: desktop ? -80 : -40, opacity: 0, ease: "none", scrollTrigger: { ...rising, end: "top 35%" } });
+
+        const covered = (on: boolean) => {
           hero.dataset.frozen = on ? "1" : "";
+          hero.style.visibility = on ? "hidden" : "";
           const film = hero.querySelector("video");
           if (!film) return;
           if (on) film.pause();
           else if (!document.hidden) void film.play().catch(() => {});
         };
-        gsap.to(hero, {
-          scale: desktop ? 0.88 : 0.94, rotateX: desktop ? 8 : 3, force3D: true,
-          transformPerspective: 1600, transformOrigin: "50% 100%", ease: "none",
-          scrollTrigger: {
-            trigger: hero, start: "top top", end: "bottom top", scrub: true,
-            onUpdate: (self) => freeze(self.progress > 0.02),
-            onLeaveBack: () => freeze(false),
-          },
-        });
-      }
-      if (heroContent) {
-        gsap.to(heroContent, { yPercent: -14, opacity: 0, force3D: true, ease: "none", scrollTrigger: { trigger: hero ?? heroContent, start: "top top", end: "65% top", scrub: true } });
+        ScrollTrigger.create({ trigger: sheet, start: "top top+=1", onEnter: () => covered(true), onLeaveBack: () => covered(false) });
       }
 
       // Frames start tilted back in perspective and straighten as they arrive.
@@ -163,8 +146,6 @@ export function Motion() {
       window.removeEventListener("load", refresh);
       window.clearTimeout(settle);
       mm.revert();
-      gsap.ticker.remove(tick);
-      lenis.destroy();
       root.classList.remove("ll-motion");
     };
   }, []);
