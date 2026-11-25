@@ -21,7 +21,7 @@ export function Nav() {
   }, []);
   return (
     <header className="fixed inset-x-0 top-3 z-50 flex justify-center px-3 sm:top-5">
-      <nav className={`flex w-full max-w-3xl items-center justify-between gap-2 rounded-full py-1.5 pl-5 pr-1.5 text-[13px] transition-colors duration-500 ${solid ? "glass-dark text-white" : "glass text-white"}`} aria-label="Main">
+      <nav className={`flex w-full max-w-3xl items-center justify-between gap-2 rounded-full py-1.5 pl-5 pr-1.5 text-[13px] transition-colors duration-500 ${solid ? "nav-solid text-white" : "nav-clear text-white"}`} aria-label="Main">
         <Link href="/" className="serif text-[22px] leading-none tracking-tight" aria-label="Leadloom home">Leadloom</Link>
         <div className="hidden items-center gap-6 md:flex">
           {LINKS.map((l) => <a key={l.href} href={l.href} className="opacity-85 transition hover:opacity-100">{l.label}</a>)}

@@ -23,6 +23,11 @@
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
+/* Nav: tinted glass, no backdrop blur. It floats over the moving hero film, and a live blur there
+   has to be recomputed every frame. The tint alone keeps the links readable. */
+.ll .nav-clear { background: rgba(28, 34, 52, 0.38); border: 1px solid rgba(255, 255, 255, 0.22); transition: background .5s ease; }
+.ll .nav-solid { background: rgba(20, 18, 16, 0.86); border: 1px solid rgba(255, 255, 255, 0.1); transition: background .5s ease; }
+
 /* Glass without live blur: for elements that move over video (a backdrop blur is recalculated every frame). */
 .ll .glass-lite {
   background: rgba(255, 255, 255, 0.16);
@@ -76,8 +81,9 @@ html.ll-motion .ll [data-split] { opacity: 0; animation: ll-show 0s 3s forwards;
 .ll .ll-flip-past { opacity: 0; transform: translateY(-10%) rotateX(18deg) scale(.92); }
 .ll .ll-flip-next { opacity: 0; transform: translateY(10%) rotateX(-18deg) scale(.92); }
 
-/* 3D frames: crisp edges while transformed */
-.ll [data-rise3d], .ll [data-hover-tilt] { transform-style: preserve-3d; will-change: transform; }
+/* 3D frames: no permanent will-change (it pins every frame as a GPU layer for the whole visit);
+   GSAP promotes each one only while it is animating (force3D). */
+.ll [data-rise3d], .ll [data-hover-tilt] { transform-style: preserve-3d; }
 
 /* Device frame for screenshots */
 .ll .frame { background: #1f1c19; border-radius: 26px; padding: 10px; box-shadow: 0 40px 80px -30px rgba(28,26,23,.45), 0 0 0 1px rgba(255,255,255,.04) inset; }

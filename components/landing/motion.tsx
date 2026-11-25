@@ -52,10 +52,29 @@ export function Motion() {
       const hero = document.querySelector<HTMLElement>("[data-hero]");
       const heroContent = document.querySelector<HTMLElement>("[data-hero-content]");
       if (hero) {
+        // While the hero is moving, hold the film on its current frame: decoding 1080p video and
+        // compositing it through a 3D transform every frame is what stutters on laptop GPUs.
+        // It resumes when you scroll back to the top.
+        // The <video> mounts a moment after this runs, so look it up when needed. The flag tells
+        // BgVideo not to restart it (e.g. on a tab switch) while it is frozen.
+        let frozen = false;
+        const freeze = (on: boolean) => {
+          if (on === frozen) return;
+          frozen = on;
+          hero.dataset.frozen = on ? "1" : "";
+          const film = hero.querySelector("video");
+          if (!film) return;
+          if (on) film.pause();
+          else if (!document.hidden) void film.play().catch(() => {});
+        };
         gsap.to(hero, {
-          scale: desktop ? 0.86 : 0.93, rotateX: desktop ? 12 : 4, force3D: true,
-          transformPerspective: 1400, transformOrigin: "50% 100%", ease: "none",
-          scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: true },
+          scale: desktop ? 0.88 : 0.94, rotateX: desktop ? 8 : 3, force3D: true,
+          transformPerspective: 1600, transformOrigin: "50% 100%", ease: "none",
+          scrollTrigger: {
+            trigger: hero, start: "top top", end: "bottom top", scrub: true,
+            onUpdate: (self) => freeze(self.progress > 0.02),
+            onLeaveBack: () => freeze(false),
+          },
         });
       }
       if (heroContent) {

@@ -29,7 +29,9 @@ export function BgVideo({ name, position = "center", overlay }: { name: "hero" |
     const v = ref.current;
     if (!motion || !v) return;
     let visible = false;
-    const sync = () => { if (visible && !document.hidden) void v.play().catch(() => {}); else v.pause(); };
+    // data-frozen: the motion layer holds the hero film still while the hero is transforming.
+    const frozen = () => (v.closest("[data-hero]") as HTMLElement | null)?.dataset.frozen === "1";
+    const sync = () => { if (visible && !document.hidden && !frozen()) void v.play().catch(() => {}); else v.pause(); };
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; sync(); }, { rootMargin: "200px 0px" });
     io.observe(v);
     document.addEventListener("visibilitychange", sync);
