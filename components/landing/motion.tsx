@@ -46,18 +46,20 @@ export function Motion() {
         gsap.from(split.words, { yPercent: 45, opacity: 0, filter: "blur(10px)", duration: 1.1, ease: "power3.out", stagger: 0.07, delay: 0.1 });
       }
 
-      // Hero film recedes into a rounded window tilting away as you scroll past it.
+      // Hero film recedes into a window tilting away as you scroll past it.
+      // Transform and opacity only: both run on the GPU compositor without repainting the film.
+      // (Animating border-radius repainted the whole video layer every frame and made it stutter.)
       const hero = document.querySelector<HTMLElement>("[data-hero]");
       const heroContent = document.querySelector<HTMLElement>("[data-hero-content]");
       if (hero) {
         gsap.to(hero, {
-          scale: desktop ? 0.86 : 0.93, rotateX: desktop ? 12 : 4, borderRadius: desktop ? 56 : 40,
+          scale: desktop ? 0.86 : 0.93, rotateX: desktop ? 12 : 4, force3D: true,
           transformPerspective: 1400, transformOrigin: "50% 100%", ease: "none",
           scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: true },
         });
       }
       if (heroContent) {
-        gsap.to(heroContent, { yPercent: -14, opacity: 0, ease: "none", scrollTrigger: { trigger: hero ?? heroContent, start: "top top", end: "65% top", scrub: true } });
+        gsap.to(heroContent, { yPercent: -14, opacity: 0, force3D: true, ease: "none", scrollTrigger: { trigger: hero ?? heroContent, start: "top top", end: "65% top", scrub: true } });
       }
 
       // Frames start tilted back in perspective and straighten as they arrive.
@@ -99,11 +101,19 @@ export function Motion() {
         const decimals = (num.split(".")[1] ?? "").length;
         const state = { v: 0 };
         el.textContent = `${pre}${(0).toFixed(decimals)}${post}`;
-        gsap.to(state, {
-          v: target, duration: 1.6, ease: "power2.out",
-          onUpdate: () => { el.textContent = `${pre}${state.v.toFixed(decimals)}${post}`; },
-          scrollTrigger: { trigger: el, start: "top 85%", once: true },
-        });
+        // Started by an IntersectionObserver, not a ScrollTrigger: the browser decides visibility, so
+        // a trigger measured before the films and fonts settled can never leave the number at 0.
+        let tween: gsap.core.Tween | undefined;
+        const io = new IntersectionObserver(([e]) => {
+          if (!e.isIntersecting) return;
+          io.disconnect();
+          tween = gsap.to(state, {
+            v: target, duration: 1.6, ease: "power2.out",
+            onUpdate: () => { el.textContent = `${pre}${state.v.toFixed(decimals)}${post}`; },
+          });
+        }, { rootMargin: "0px 0px -15% 0px" });
+        io.observe(el);
+        cleanups.push(() => { io.disconnect(); tween?.kill(); });
       });
 
       // Pricing cards fan in with depth; the featured plan lifts forward.
@@ -122,12 +132,17 @@ export function Motion() {
     });
 
     // Images and fonts change the page height after load; re-measure every trigger.
+    // In production the page has often finished loading before this effect runs, so a "load"
+    // listener alone never fires; refresh now as well, and once more after layout settles.
     const refresh = () => ScrollTrigger.refresh();
-    window.addEventListener("load", refresh);
+    if (document.readyState === "complete") requestAnimationFrame(refresh);
+    else window.addEventListener("load", refresh);
     document.fonts?.ready.then(refresh);
+    const settle = window.setTimeout(refresh, 1200);
 
     return () => {
       window.removeEventListener("load", refresh);
+      window.clearTimeout(settle);
       mm.revert();
       gsap.ticker.remove(tick);
       lenis.destroy();

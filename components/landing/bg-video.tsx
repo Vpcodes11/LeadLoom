@@ -55,8 +55,9 @@ export function BgVideo({ name, position = "center", overlay }: { name: "hero" |
           onCanPlay={() => setReady(true)}
         />
       )}
+      {/* No grain layer here: the films carry their own grain, and a blended overlay on moving video
+          has to be recomposited every frame, which made the hero transition stutter. */}
       <div className="absolute inset-0" style={{ background: overlay }} />
-      <div className="ll-grain absolute inset-0" />
     </div>
   );
 }

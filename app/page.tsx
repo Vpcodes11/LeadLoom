@@ -27,8 +27,8 @@ export default function Home() {
       <section data-hero className="relative mx-3 overflow-hidden rounded-[32px] bg-[#4f6a95] text-white will-change-transform sm:mx-5">
         <BgVideo name="hero" position="50% 70%" overlay="linear-gradient(180deg, rgba(10,16,30,.45) 0%, rgba(10,16,30,.22) 40%, rgba(10,16,30,.05) 62%, rgba(8,12,6,.45) 100%)" />
         <div data-hero-content className="relative mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center px-6 pb-10 pt-24 text-center sm:pt-[13vh]">
-          <p className="rise glass mono rounded-full px-3.5 py-1.5 text-[11px] uppercase" style={{ animationDelay: "80ms" }}>For marketing &amp; SEO agencies</p>
-          <h1 data-split className="serif mt-5 text-[50px] leading-[0.98] drop-shadow-[0_2px_24px_rgba(20,30,60,.35)] sm:text-[76px] lg:text-[92px]">
+          <p className="rise glass-lite mono rounded-full px-3.5 py-1.5 text-[11px] uppercase" style={{ animationDelay: "80ms" }}>For marketing &amp; SEO agencies</p>
+          <h1 data-split className="serif mt-5 text-[50px] leading-[0.98] ll-text-shadow sm:text-[76px] lg:text-[92px]">
             Content that <em>leads</em> somewhere.
           </h1>
           <p className="rise mt-5 max-w-xl text-[16px] leading-7 text-white/90 sm:text-[17px]" style={{ animationDelay: "320ms" }}>
@@ -36,7 +36,7 @@ export default function Home() {
           </p>
           <div className="rise mt-7 flex flex-col items-center gap-3 sm:flex-row" style={{ animationDelay: "460ms" }}>
             <Link href="/signup" className="btn-light rounded-full px-6 py-3 text-sm font-medium">Start free: 5 pieces, no card</Link>
-            <a href="#how" className="glass rounded-full px-6 py-3 text-sm font-medium">See how it works</a>
+            <a href="#how" className="glass-lite rounded-full px-6 py-3 text-sm font-medium">See how it works</a>
           </div>
           <p className="rise mono mt-auto pt-16 text-[11px] uppercase text-white/80" style={{ animationDelay: "620ms" }}>
             Voice → Funnel → Draft → Quality check → Client approval
