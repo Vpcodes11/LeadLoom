@@ -27,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen md:flex">
       <aside className="flex gap-3 overflow-x-auto border-b border-[rgba(28,26,23,0.08)] bg-paper-2/70 p-3 md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0 md:flex-col md:gap-5 md:overflow-y-auto md:border-b-0 md:border-r md:p-4">
         {/* Golden-hour card: the landing scene in miniature, with a bird or two and rising sparkles. */}
-        <Link href="/app" className={`ll ${llFonts} relative hidden h-28 shrink-0 overflow-hidden rounded-[22px] bg-[#4f6a95] text-white md:block`} aria-label="Leadloom dashboard">
+        <Link href="/app" className={`ll ${llFonts} relative hidden h-28 shrink-0 overflow-hidden rounded-[22px] md:block`} style={{ color: "#fff", background: "#4f6a95" }} aria-label="Leadloom dashboard">
           {/* eslint-disable-next-line @next/next/no-img-element -- static poster */}
           <img src="/landing/hero-poster.webp" alt="" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: "50% 64%" }} />
           <span className="absolute inset-0 bg-gradient-to-b from-[rgba(10,16,30,.4)] to-[rgba(10,16,30,.1)]" />

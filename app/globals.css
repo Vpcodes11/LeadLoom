@@ -32,7 +32,7 @@
 body { @apply bg-paper text-ink antialiased; }
 ::selection { background: #f3e2bf; }
 
-.prose-ll { @apply text-[15px] leading-7 text-slate-800; }
+.prose-ll { @apply text-[15px] leading-7 text-slate-800; overflow-wrap: anywhere; }
 .prose-ll h1 { @apply text-2xl font-bold mt-2 mb-4 text-slate-900; }
 .prose-ll h2 { @apply text-xl font-semibold mt-8 mb-3 text-slate-900; }
 .prose-ll h3 { @apply text-lg font-semibold mt-6 mb-2; }
@@ -43,7 +43,7 @@ body { @apply bg-paper text-ink antialiased; }
 .prose-ll a { @apply text-brand-600 underline; }
 .prose-ll strong { @apply font-semibold text-slate-900; }
 .prose-ll code { @apply bg-slate-100 rounded px-1 text-sm; }
-.prose-ll table { @apply w-full text-sm my-4; }
+.prose-ll table { @apply w-full text-sm my-4; display: block; overflow-x: auto; }
 .prose-ll th, .prose-ll td { @apply border border-slate-200 px-2 py-1 text-left; }
 
 /* One-shot sparkle burst when a piece is approved (components/sparkle-burst.tsx). */
