@@ -27,7 +27,8 @@ export function Motion() {
     }
     gsap.registerPlugin(ScrollTrigger, SplitText);
 
-    const lenis = new Lenis({ lerp: 0.1, anchors: { offset: -88 } });
+    // Anchor links glide; the sections' own scroll-margin (scroll-mt-24) leaves room for the floating nav.
+    const lenis = new Lenis({ lerp: 0.1, anchors: true });
     lenis.on("scroll", ScrollTrigger.update);
     const tick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(tick);
@@ -87,7 +88,11 @@ export function Motion() {
 
       // Numbers count up from zero when they scroll into view.
       gsap.utils.toArray<HTMLElement>("[data-count]").forEach((el) => {
-        const m = (el.textContent ?? "").match(/^(\D*)([\d.]+)(.*)$/);
+        // Keep the real value: this setup re-runs at breakpoint changes, after the text has been set to 0.
+        el.dataset.countFinal ??= el.textContent ?? "";
+        const final = el.dataset.countFinal;
+        cleanups.push(() => { el.textContent = final; });
+        const m = final.match(/^(\D*)([\d.]+)(.*)$/);
         if (!m) return;
         const [, pre, num, post] = m;
         const target = Number(num);
