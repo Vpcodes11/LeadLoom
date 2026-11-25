@@ -34,14 +34,14 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 
 /** Minimal, client-safe HTML layout. All dynamic text is escaped. */
 export function layout(title: string, paragraphs: string[], cta?: { label: string; url: string }) {
-  return `<!doctype html><html><body style="margin:0;background:#f8fafc;font-family:-apple-system,Segoe UI,Inter,sans-serif;color:#0f172a">
+  return `<!doctype html><html><body style="margin:0;background:#f3eee4;font-family:-apple-system,Segoe UI,Inter,sans-serif;color:#1c1a17">
 <div style="max-width:520px;margin:0 auto;padding:32px 20px">
-<div style="font-weight:700;font-size:18px;margin-bottom:24px"><span style="display:inline-block;background:#1f55e6;color:#fff;border-radius:6px;width:24px;height:24px;text-align:center;line-height:24px;margin-right:6px">L</span>Leadloom</div>
-<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px">
-<h1 style="font-size:20px;margin:0 0 12px">${esc(title)}</h1>
-${paragraphs.map((p) => `<p style="font-size:15px;line-height:1.6;margin:0 0 12px;color:#334155">${esc(p)}</p>`).join("")}
-${cta ? `<p style="margin:20px 0 0"><a href="${esc(cta.url)}" style="background:#1f55e6;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600;display:inline-block">${esc(cta.label)}</a></p>` : ""}
+<div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;margin-bottom:24px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#e2a13c;margin-right:8px;vertical-align:middle"></span>Leadloom</div>
+<div style="background:#fff;border:1px solid rgba(28,26,23,.1);border-radius:18px;padding:24px">
+<h1 style="font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:28px;margin:0 0 12px">${esc(title)}</h1>
+${paragraphs.map((p) => `<p style="font-size:15px;line-height:1.6;margin:0 0 12px;color:#57524a">${esc(p)}</p>`).join("")}
+${cta ? `<p style="margin:20px 0 0"><a href="${esc(cta.url)}" style="background:#1c1a17;color:#fffaf0;text-decoration:none;padding:11px 20px;border-radius:999px;font-weight:600;display:inline-block">${esc(cta.label)}</a></p>` : ""}
 </div>
-<p style="font-size:12px;color:#94a3b8;margin-top:16px">You received this because you have a Leadloom account.</p>
+<p style="font-size:12px;color:#8a8378;margin-top:16px">You received this because you have a Leadloom account.</p>
 </div></body></html>`;
 }
