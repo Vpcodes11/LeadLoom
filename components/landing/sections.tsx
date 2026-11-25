@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { Reveal } from "./reveal";
 import { BgVideo } from "./bg-video";
+import { Ambience } from "./ambience";
 import { Photo } from "./photo";
 
 export function Eyebrow({ children, light }: { children: React.ReactNode; light?: boolean }) {
@@ -105,6 +106,7 @@ export function RetainerMath() {
   return (
     <section className="relative mx-3 overflow-hidden rounded-[32px] bg-[var(--night)] text-white sm:mx-5">
       <BgVideo name="night" position="50% 70%" overlay="linear-gradient(180deg, rgba(4,8,20,.35) 0%, rgba(4,8,20,.1) 55%, rgba(4,8,20,.45) 100%)" />
+      <Ambience scene="night" />
       <div className="relative mx-auto max-w-5xl px-6 pb-56 pt-24 text-center sm:pb-72">
         <Reveal>
           <Eyebrow light>The maths</Eyebrow>
@@ -196,6 +198,7 @@ export function Closing() {
   return (
     <section className="relative mx-3 mb-3 overflow-hidden rounded-[32px] bg-[#4f6a95] text-white sm:mx-5 sm:mb-5">
       <Photo src="/landing/closing.webp" position="50% 70%" overlay="linear-gradient(180deg, rgba(10,16,30,.5) 0%, rgba(10,16,30,.25) 45%, rgba(8,12,6,.45) 100%)" />
+      <Ambience scene="dusk" />
       <div className="relative mx-auto flex min-h-[640px] max-w-3xl flex-col items-center px-6 pt-28 text-center sm:min-h-[720px]">
         <Eyebrow light>Start this week</Eyebrow>
         <h2 className="serif mt-4 text-[46px] leading-[1.02] drop-shadow-[0_2px_20px_rgba(0,0,0,.25)] sm:text-[72px]">Try it on your most <em>demanding</em> client.</h2>

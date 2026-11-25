@@ -94,6 +94,76 @@ html.ll-motion .ll [data-split] { opacity: 0; animation: ll-show 0s 3s forwards;
    GSAP promotes each one only while it is animating (force3D). */
 .ll [data-rise3d], .ll [data-hover-tilt] { transform-style: preserve-3d; }
 
+/* ---------- Ambience: birds, butterflies, sparkles, glints, fireflies (components/landing/ambience.tsx) ----------
+   Only transform and opacity animate, so everything runs on the GPU compositor. */
+.ll .amb > * { position: absolute; }
+
+/* Birds glide across the sky; wings flap. */
+.ll .amb-bird { left: 0; top: var(--y); width: var(--w); color: rgba(34, 30, 40, .62);
+  animation: amb-fly var(--d) linear var(--delay) infinite; }
+.ll .amb-bird svg { display: block; fill: currentColor; overflow: visible; }
+.ll .amb-rtl { animation-direction: reverse; }
+.ll .amb-rtl svg { transform: scaleX(-1); }
+@keyframes amb-fly {
+  0%   { transform: translate3d(-8vw, 0, 0); }
+  50%  { transform: translate3d(50vw, var(--bob), 0); }
+  100% { transform: translate3d(108vw, 0, 0); }
+}
+.ll .amb-wing-l, .ll .amb-wing-r { transform-box: fill-box; animation: amb-flap .42s ease-in-out infinite alternate; }
+.ll .amb-wing-l { transform-origin: 100% 70%; }
+.ll .amb-wing-r { transform-origin: 0% 70%; animation-name: amb-flap-r; }
+@keyframes amb-flap   { from { transform: rotate(22deg); } to { transform: rotate(-26deg); } }
+@keyframes amb-flap-r { from { transform: rotate(-22deg); } to { transform: rotate(26deg); } }
+
+/* Butterflies wander (x and y drift at different speeds) and flutter. */
+.ll .amb-bf-x { left: var(--x); top: var(--y); animation: amb-wander-x var(--tx) ease-in-out infinite alternate; }
+.ll .amb-bf-y { animation: amb-wander-y var(--ty) ease-in-out infinite alternate; }
+@keyframes amb-wander-x { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(var(--dx), 0, 0); } }
+@keyframes amb-wander-y { from { transform: translate3d(0, 0, 0) rotate(-8deg); } to { transform: translate3d(0, var(--dy), 0) rotate(10deg); } }
+.ll .amb-bf { display: block; width: var(--s); height: auto; fill: var(--c); overflow: visible;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+.ll .amb-bf-l, .ll .amb-bf-r { transform-box: view-box; animation: amb-flutter .32s ease-in-out infinite; }
+.ll .amb-bf-l { transform-origin: 12px 10px; }
+.ll .amb-bf-r { transform-origin: 12px 10px; animation-delay: -.02s; }
+@keyframes amb-flutter { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.22); } }
+
+/* Warm halo around the lamp, breathing slowly. */
+.ll .amb-glow { left: 50%; top: 77%; width: 220px; height: 220px; margin: -110px 0 0 -110px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 214, 140, .55) 0%, rgba(255, 190, 110, .22) 45%, rgba(255, 180, 100, .06) 75%, rgba(255, 180, 100, 0) 100%);
+  animation: amb-breathe 4.5s ease-in-out infinite alternate; }
+.ll .amb-glow-strong { width: 300px; height: 300px; margin: -150px 0 0 -150px;
+  background: radial-gradient(closest-side, rgba(255, 210, 130, .62) 0%, rgba(255, 185, 100, .24) 45%, rgba(255, 180, 100, .06) 75%, rgba(255, 180, 100, 0) 100%); }
+@keyframes amb-breathe { from { opacity: .55; transform: scale(.92); } to { opacity: 1; transform: scale(1.08); } }
+@media (max-width: 767px) { .ll .amb-glow { width: 150px; height: 150px; margin: -75px 0 0 -75px; } }
+
+/* Sparkles rise from the lamp and fade. */
+.ll .amb-mote { left: var(--x); top: var(--y); width: var(--s); height: var(--s); border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, rgba(255, 252, 235, 1) 0%, rgba(255, 222, 140, .95) 30%, rgba(255, 196, 96, 0) 72%);
+  animation: amb-rise var(--d) cubic-bezier(.3, .1, .4, 1) var(--delay) infinite; }
+@keyframes amb-rise {
+  0%   { opacity: 0; transform: translate3d(0, 0, 0) scale(.5); }
+  12%  { opacity: 1; }
+  70%  { opacity: .75; }
+  100% { opacity: 0; transform: translate3d(var(--dx), var(--dy), 0) scale(1.1); }
+}
+
+/* Glints twinkle where the threads gather. */
+.ll .amb-glint { left: var(--x); top: var(--y); width: var(--s); height: var(--s); fill: rgba(255, 246, 220, .95); opacity: 0;
+  animation: amb-twinkle var(--d) ease-in-out var(--delay) infinite; }
+@keyframes amb-twinkle { 0%, 100% { opacity: 0; transform: scale(.3) rotate(0deg); } 45% { opacity: 1; transform: scale(1) rotate(20deg); } 60% { opacity: .9; } }
+
+/* Fireflies drift and blink. */
+.ll .amb-ff-x { left: var(--x); top: var(--y); animation: amb-wander-x var(--d) ease-in-out infinite alternate; }
+.ll .amb-ff { display: block; width: 6px; height: 6px; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, rgba(250, 255, 190, 1) 0%, rgba(210, 240, 120, .8) 35%, rgba(190, 230, 90, 0) 70%);
+  animation: amb-ff-drift var(--d) ease-in-out var(--delay) infinite alternate, amb-blink 2.6s ease-in-out var(--delay) infinite; }
+@keyframes amb-ff-drift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(0, var(--dy), 0) scale(1.6); } }
+@keyframes amb-blink { 0%, 100% { opacity: 0; } 35%, 60% { opacity: 1; } }
+
+/* Fewer creatures on phones; nothing animates while a section is covered (data-frozen) or hidden. */
+@media (max-width: 767px) { .ll .amb .amb-d { display: none; } }
+.ll [data-frozen="1"] .amb * { animation-play-state: paused; }
+
 /* Device frame for screenshots */
 .ll .frame { background: #1f1c19; border-radius: 26px; padding: 10px; box-shadow: 0 40px 80px -30px rgba(28,26,23,.45), 0 0 0 1px rgba(255,255,255,.04) inset; }
 .ll .frame > .screen { border-radius: 18px; overflow: hidden; background: #fff; }
@@ -104,6 +174,7 @@ html:has(.ll) { scroll-behavior: smooth; }
 
 @media (prefers-reduced-motion: reduce) {
   html:has(.ll) { scroll-behavior: auto; }
+  .ll .amb { display: none; }
   .ll .rise, .ll .ll-photo { animation: none !important; }
   .ll .reveal { opacity: 1; transform: none; transition: none; }
   .ll .ll-flip { transition: opacity .3s ease; }

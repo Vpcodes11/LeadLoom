@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Instrument_Serif, Inter, JetBrains_Mono } from "next/font/google";
 import { Nav } from "@/components/landing/nav";
 import { BgVideo } from "@/components/landing/bg-video";
+import { Ambience } from "@/components/landing/ambience";
 import { Steps } from "@/components/landing/steps";
 import { QaMeter } from "@/components/landing/qa-meter";
 import { Reveal } from "@/components/landing/reveal";
@@ -26,6 +27,7 @@ export default function Home() {
       {/* Hero: the Leadloom film, pinned. The page below slides over it like a curtain. */}
       <section data-hero className="sticky top-3 z-0 mx-3 overflow-hidden rounded-[32px] bg-[#4f6a95] text-white sm:top-5 sm:mx-5">
         <BgVideo name="hero" position="50% 70%" overlay="linear-gradient(180deg, rgba(10,16,30,.45) 0%, rgba(10,16,30,.22) 40%, rgba(10,16,30,.05) 62%, rgba(8,12,6,.45) 100%)" />
+        <Ambience scene="day" />
         <div data-hero-dim aria-hidden className="pointer-events-none absolute inset-0 bg-[#0b1020] opacity-0" />
         <div data-hero-content className="relative mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center px-6 pb-10 pt-24 text-center sm:pt-[13vh]">
           <p className="rise glass-lite mono rounded-full px-3.5 py-1.5 text-[11px] uppercase" style={{ animationDelay: "80ms" }}>For marketing &amp; SEO agencies</p>
